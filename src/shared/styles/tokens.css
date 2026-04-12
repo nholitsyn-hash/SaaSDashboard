@@ -1,0 +1,319 @@
+/*
+ * Design Tokens — SaaS Analytics Dashboard
+ *
+ * Structure:
+ *   1. Raw color scale — the palette (never used directly in components)
+ *   2. Semantic tokens — what colors MEAN (used in components via Tailwind)
+ *   3. Spacing scale
+ *   4. Typography scale
+ *   5. Border radius
+ *   6. Shadows
+ *   7. Dark mode overrides (semantic tokens only — raw scale never changes)
+ */
+
+/* =============================================================================
+   1. RAW COLOR SCALE
+
+   These define the full palette. Components should NOT reference these directly.
+   Instead, use semantic tokens below which map to these values.
+   WHY: If we rebrand or white-label, we swap semantic mappings — not every
+   component. The raw scale is the "paint store", semantics are "wall colors".
+   ============================================================================= */
+
+:root {
+  /* Slate — neutrals */
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
+  /* Blue — primary */
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+
+  /* Violet — secondary/accent */
+  --color-violet-50: #f5f3ff;
+  --color-violet-100: #ede9fe;
+  --color-violet-200: #ddd6fe;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7c3aed;
+  --color-violet-700: #6d28d9;
+
+  /* Green — success */
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-200: #bbf7d0;
+  --color-green-300: #86efac;
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+
+  /* Amber — warning */
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+
+  /* Red — danger/error */
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-200: #fecaca;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+}
+
+/* =============================================================================
+   2. SEMANTIC TOKENS — LIGHT THEME (default)
+
+   These are what components actually consume. They describe PURPOSE, not color.
+   WHY: "bg-surface" is meaningful. "slate-50" is not. When dark mode flips,
+   only these values change — components don't need to know about it.
+   ============================================================================= */
+
+:root {
+  /* --- Backgrounds --- */
+  --bg-base: var(--color-slate-50);
+  --bg-surface: #ffffff;
+  --bg-surface-raised: #ffffff;
+  --bg-surface-overlay: #ffffff;
+  --bg-muted: var(--color-slate-100);
+  --bg-subtle: var(--color-slate-200);
+  --bg-inverse: var(--color-slate-900);
+
+  /* --- Text --- */
+  --text-primary: var(--color-slate-900);
+  --text-secondary: var(--color-slate-600);
+  --text-tertiary: var(--color-slate-500);
+  --text-muted: var(--color-slate-400);
+  --text-inverse: #ffffff;
+  --text-on-primary: #ffffff;
+  --text-on-secondary: #ffffff;
+  --text-on-danger: #ffffff;
+
+  /* --- Borders --- */
+  --border-default: var(--color-slate-200);
+  --border-strong: var(--color-slate-300);
+  --border-subtle: var(--color-slate-100);
+  --border-focus: var(--color-blue-500);
+
+  /* --- Primary action --- */
+  --primary: var(--color-blue-600);
+  --primary-hover: var(--color-blue-700);
+  --primary-subtle: var(--color-blue-50);
+  --primary-text: var(--color-blue-600);
+
+  /* --- Secondary action --- */
+  --secondary: var(--color-violet-600);
+  --secondary-hover: var(--color-violet-700);
+  --secondary-subtle: var(--color-violet-50);
+  --secondary-text: var(--color-violet-600);
+
+  /* --- Status: success --- */
+  --success: var(--color-green-600);
+  --success-hover: var(--color-green-700);
+  --success-subtle: var(--color-green-50);
+  --success-text: var(--color-green-600);
+
+  /* --- Status: warning --- */
+  --warning: var(--color-amber-500);
+  --warning-hover: var(--color-amber-600);
+  --warning-subtle: var(--color-amber-50);
+  --warning-text: var(--color-amber-700);
+
+  /* --- Status: danger --- */
+  --danger: var(--color-red-600);
+  --danger-hover: var(--color-red-700);
+  --danger-subtle: var(--color-red-50);
+  --danger-text: var(--color-red-600);
+}
+
+/* =============================================================================
+   3. SPACING SCALE
+
+   WHY a custom scale: Tailwind's default spacing works fine, but defining our
+   own tokens means we can reference them in non-Tailwind contexts (ECharts
+   config, inline styles for canvas) and keep everything consistent.
+   ============================================================================= */
+
+:root {
+  --spacing-0: 0;
+  --spacing-0-5: 0.125rem; /* 2px */
+  --spacing-1: 0.25rem; /* 4px */
+  --spacing-1-5: 0.375rem; /* 6px */
+  --spacing-2: 0.5rem; /* 8px */
+  --spacing-3: 0.75rem; /* 12px */
+  --spacing-4: 1rem; /* 16px */
+  --spacing-5: 1.25rem; /* 20px */
+  --spacing-6: 1.5rem; /* 24px */
+  --spacing-8: 2rem; /* 32px */
+  --spacing-10: 2.5rem; /* 40px */
+  --spacing-12: 3rem; /* 48px */
+  --spacing-16: 4rem; /* 64px */
+  --spacing-20: 5rem; /* 80px */
+  --spacing-24: 6rem; /* 96px */
+}
+
+/* =============================================================================
+   4. TYPOGRAPHY SCALE
+
+   Size + line-height pairs. We define them as tokens so ECharts labels,
+   canvas overlays, and CSS can all reference the same values.
+   Font family is set in layout.tsx via next/font — not here.
+   ============================================================================= */
+
+:root {
+  /* Font sizes */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem; /* 36px */
+
+  /* Line heights */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* Font weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Letter spacing */
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+}
+
+/* =============================================================================
+   5. BORDER RADIUS
+   ============================================================================= */
+
+:root {
+  --radius-none: 0;
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.375rem; /* 6px */
+  --radius-lg: 0.5rem; /* 8px */
+  --radius-xl: 0.75rem; /* 12px */
+  --radius-2xl: 1rem; /* 16px */
+  --radius-full: 9999px;
+}
+
+/* =============================================================================
+   6. SHADOWS
+
+   WHY three levels: most SaaS dashboards only need subtle elevation.
+   sm = cards, md = dropdowns/popovers, lg = modals.
+   ============================================================================= */
+
+:root {
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* =============================================================================
+   7. DARK MODE OVERRIDES
+
+   Only semantic tokens change. Raw scale stays the same.
+   WHY [data-theme="dark"] instead of @media (prefers-color-scheme):
+   We want a manual toggle so users can override OS preference.
+   The attribute is set on <html> by our useTheme hook.
+   ============================================================================= */
+
+[data-theme="dark"] {
+  /* --- Backgrounds --- */
+  --bg-base: var(--color-slate-950);
+  --bg-surface: var(--color-slate-900);
+  --bg-surface-raised: var(--color-slate-800);
+  --bg-surface-overlay: var(--color-slate-800);
+  --bg-muted: var(--color-slate-800);
+  --bg-subtle: var(--color-slate-700);
+  --bg-inverse: var(--color-slate-50);
+
+  /* --- Text --- */
+  --text-primary: var(--color-slate-50);
+  --text-secondary: var(--color-slate-300);
+  --text-tertiary: var(--color-slate-400);
+  --text-muted: var(--color-slate-500);
+  --text-inverse: var(--color-slate-900);
+  --text-on-primary: #ffffff;
+  --text-on-secondary: #ffffff;
+  --text-on-danger: #ffffff;
+
+  /* --- Borders --- */
+  --border-default: var(--color-slate-700);
+  --border-strong: var(--color-slate-600);
+  --border-subtle: var(--color-slate-800);
+  --border-focus: var(--color-blue-400);
+
+  /* --- Primary action --- */
+  --primary: var(--color-blue-500);
+  --primary-hover: var(--color-blue-400);
+  --primary-subtle: color-mix(in srgb, var(--color-blue-500) 15%, transparent);
+  --primary-text: var(--color-blue-400);
+
+  /* --- Secondary action --- */
+  --secondary: var(--color-violet-500);
+  --secondary-hover: var(--color-violet-400);
+  --secondary-subtle: color-mix(
+    in srgb,
+    var(--color-violet-500) 15%,
+    transparent
+  );
+  --secondary-text: var(--color-violet-400);
+
+  /* --- Status: success --- */
+  --success: var(--color-green-500);
+  --success-hover: var(--color-green-400);
+  --success-subtle: color-mix(in srgb, var(--color-green-500) 15%, transparent);
+  --success-text: var(--color-green-400);
+
+  /* --- Status: warning --- */
+  --warning: var(--color-amber-400);
+  --warning-hover: var(--color-amber-300);
+  --warning-subtle: color-mix(in srgb, var(--color-amber-500) 15%, transparent);
+  --warning-text: var(--color-amber-400);
+
+  /* --- Status: danger --- */
+  --danger: var(--color-red-500);
+  --danger-hover: var(--color-red-400);
+  --danger-subtle: color-mix(in srgb, var(--color-red-500) 15%, transparent);
+  --danger-text: var(--color-red-400);
+
+  /* --- Shadows (darker for dark mode) --- */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+}
