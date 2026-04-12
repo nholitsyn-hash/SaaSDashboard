@@ -83,6 +83,16 @@
   --color-red-500: #ef4444;
   --color-red-600: #dc2626;
   --color-red-700: #b91c1c;
+
+  /* Teal — accent */
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
 }
 
 /* =============================================================================
@@ -130,6 +140,12 @@
   --secondary-hover: var(--color-violet-700);
   --secondary-subtle: var(--color-violet-50);
   --secondary-text: var(--color-violet-600);
+
+  /* --- Accent --- */
+  --accent: var(--color-teal-600);
+  --accent-hover: var(--color-teal-700);
+  --accent-subtle: var(--color-teal-50);
+  --accent-text: var(--color-teal-600);
 
   /* --- Status: success --- */
   --success: var(--color-green-600);
@@ -292,6 +308,12 @@
     transparent
   );
   --secondary-text: var(--color-violet-400);
+
+  /* --- Accent --- */
+  --accent: var(--color-teal-500);
+  --accent-hover: var(--color-teal-400);
+  --accent-subtle: color-mix(in srgb, var(--color-teal-500) 15%, transparent);
+  --accent-text: var(--color-teal-400);
 
   /* --- Status: success --- */
   --success: var(--color-green-500);

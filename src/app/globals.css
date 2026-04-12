@@ -54,6 +54,12 @@
   --color-secondary-subtle: var(--secondary-subtle);
   --color-secondary-text: var(--secondary-text);
 
+  /* --- Colors: accent --- */
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-text: var(--accent-text);
+
   /* --- Colors: status --- */
   --color-success: var(--success);
   --color-success-hover: var(--success-hover);
