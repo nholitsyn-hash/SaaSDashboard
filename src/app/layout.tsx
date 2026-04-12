@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/shared/ui/ThemeProvider";
 import "./globals.css";
 
@@ -32,6 +33,16 @@ export const metadata: Metadata = {
   description: "Business Analytics SaaS Dashboard",
 };
 
+/**
+ * WHY SessionProvider wraps ThemeProvider:
+ * SessionProvider from Auth.js gives client components access to
+ * session data via useSession(). It must be high in the tree so
+ * every page can read auth state. It wraps ThemeProvider because
+ * auth is a more fundamental concern than theming.
+ *
+ * In Auth.js v5 with App Router, SessionProvider auto-fetches
+ * the session from /api/auth/session — no need to pass it as a prop.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -40,7 +51,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <ThemeProvider>{children}</ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );
