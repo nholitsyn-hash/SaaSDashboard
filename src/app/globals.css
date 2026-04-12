@@ -1,1 +1,97 @@
 @import "tailwindcss";
+@import "../shared/styles/tokens.css";
+
+/*
+ * Tailwind v4 @theme mapping
+ *
+ * WHY @theme inline:
+ * In Tailwind v4, @theme is the CSS-native replacement for tailwind.config.js.
+ * It registers CSS variables that Tailwind generates utility classes from.
+ * "inline" means these tokens won't generate standalone CSS variables (they
+ * already exist in tokens.css) — they only teach Tailwind to create utilities.
+ *
+ * After this block, you can write className="bg-surface text-primary" etc.
+ * Tailwind reads the var() references at build time and generates the classes.
+ */
+
+@theme inline {
+  /* --- Colors: backgrounds --- */
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-surface-raised: var(--bg-surface-raised);
+  --color-bg-surface-overlay: var(--bg-surface-overlay);
+  --color-bg-muted: var(--bg-muted);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-bg-inverse: var(--bg-inverse);
+
+  /* --- Colors: text --- */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-muted: var(--text-muted);
+  --color-text-inverse: var(--text-inverse);
+  --color-text-on-primary: var(--text-on-primary);
+  --color-text-on-secondary: var(--text-on-secondary);
+  --color-text-on-danger: var(--text-on-danger);
+
+  /* --- Colors: borders --- */
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-focus: var(--border-focus);
+
+  /* --- Colors: primary --- */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-text: var(--primary-text);
+
+  /* --- Colors: secondary --- */
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-subtle: var(--secondary-subtle);
+  --color-secondary-text: var(--secondary-text);
+
+  /* --- Colors: status --- */
+  --color-success: var(--success);
+  --color-success-hover: var(--success-hover);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-text: var(--success-text);
+
+  --color-warning: var(--warning);
+  --color-warning-hover: var(--warning-hover);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-text: var(--warning-text);
+
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-danger-text: var(--danger-text);
+
+  /* --- Shadows --- */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  /* --- Border radius --- */
+  --radius-none: var(--radius-none);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-full: var(--radius-full);
+}
+
+/*
+ * Base styles
+ *
+ * WHY here and not in tokens.css:
+ * tokens.css defines VALUES. globals.css applies them.
+ * This keeps tokens.css a pure data file with no side effects.
+ */
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
