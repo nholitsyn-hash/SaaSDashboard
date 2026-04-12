@@ -1,9 +1,11 @@
 "use client";
 
-import { useTheme } from "@/shared/hooks/useTheme";
+import { useThemeStore } from "@/shared/store/theme";
+import { useMounted } from "@/shared/hooks/useMounted";
 
 export default function Home() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useThemeStore();
+  const mounted = useMounted();
 
   return (
     <main className="min-h-screen bg-bg-base p-8">
@@ -12,7 +14,7 @@ export default function Home() {
           SaaS Dashboard — Token Test
         </h1>
         <p className="text-text-secondary">
-          Current theme: {theme}
+          Current theme: {mounted ? theme : "—"}
         </p>
         <button
           onClick={toggleTheme}
@@ -24,6 +26,7 @@ export default function Home() {
           <p className="text-text-primary">Surface card with border and shadow</p>
         </div>
         <div className="flex gap-3">
+          <span className="rounded-md bg-accent-subtle px-3 py-1 text-accent-text">Accent</span>
           <span className="rounded-md bg-success-subtle px-3 py-1 text-success-text">Success</span>
           <span className="rounded-md bg-warning-subtle px-3 py-1 text-warning-text">Warning</span>
           <span className="rounded-md bg-danger-subtle px-3 py-1 text-danger-text">Danger</span>

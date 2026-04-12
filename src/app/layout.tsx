@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ThemeProvider } from "@/shared/ui/ThemeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,26 +8,16 @@ export const metadata: Metadata = {
 };
 
 /**
- * WHY an inline script in <head>:
- * This runs BEFORE React hydrates, setting the data-theme attribute
- * on <html> immediately. Without this, users with dark mode preference
- * would see a flash of the light theme while React boots up (FOWT).
+ * WHY ThemeProvider wraps children inside <body>:
+ * It's a client component that reads the Zustand theme store and
+ * sets data-theme on <html> via useEffect after hydration.
+ * This keeps the server-rendered HTML clean (no data-theme attribute)
+ * so hydration matches perfectly. The attribute is set post-mount.
  *
- * WHY dangerouslySetInnerHTML:
- * Next.js doesn't support raw <script> children in Server Components.
- * This is one of the accepted patterns for blocking inline scripts.
- * The string is static (no user input), so there's no XSS risk.
+ * A brief flash of light theme may occur for dark-mode users.
+ * We'll solve this in Phase 2 with a cookie-based approach once
+ * Auth.js is added (server reads theme from cookie → SSR correct theme).
  */
-const themeScript = `
-  (function() {
-    var theme = localStorage.getItem('saas-dashboard-theme');
-    if (!theme) {
-      theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    document.documentElement.setAttribute('data-theme', theme);
-  })();
-`;
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,10 +25,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
-      <body>{children}</body>
+      <body suppressHydrationWarning>
+{/* suppressHydrationWarning: browser extensions (e.g. Grammarly)
+             inject attributes on <body> before React hydrates */}
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }
