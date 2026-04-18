@@ -11,7 +11,7 @@ import type { Role } from "@/shared/types/auth";
  *
  * WHY in shared/api/:
  * The `auth()` function is infrastructure that every layer consumes —
- * middleware reads the session, API routes check permissions, layouts
+ * the proxy reads the session, API routes check permissions, layouts
  * pass session to providers. It's analogous to a fetch client or DB
  * connection. FSD's shared/api/ is described as "base fetch, query client."
  *
@@ -19,7 +19,7 @@ import type { Role } from "@/shared/types/auth";
  * The Credentials provider requires JWT. Auth.js intentionally does NOT
  * call the adapter's createSession() for credentials logins — this is
  * by design. JWT sessions are also faster (no DB lookup per request)
- * and work on Edge Runtime (middleware).
+ * and work on Edge Runtime (the Next.js proxy).
  */
 
 const loginSchema = z.object({

@@ -4,17 +4,23 @@ import { getToken } from "next-auth/jwt";
 import { hasMinRole, type Role } from "@/shared/types/auth";
 
 /**
- * Role-based route protection middleware.
+ * Role-based route protection proxy.
+ *
+ * WHY proxy() (renamed from middleware() in Next.js 16):
+ * Next renamed the file convention from `middleware.ts` to `proxy.ts`
+ * to avoid confusion with Express-style middleware and to reflect that
+ * this function runs at the edge as a network boundary proxy, not as
+ * an in-app request pipeline.
  *
  * WHY getToken() instead of auth():
- * Middleware runs on the Edge Runtime, which doesn't support Node.js
+ * Proxy runs on the Edge Runtime, which doesn't support Node.js
  * modules (node:path, node:url, etc.). Our auth config imports
  * Prisma, which uses Node.js APIs. Instead, we use getToken() from
  * next-auth/jwt — it only decodes the JWT cookie using pure crypto,
  * no database, no Node.js APIs. Same session data, Edge-compatible.
  *
- * WHY middleware instead of per-page checks:
- * Middleware runs before the page even starts rendering.
+ * WHY a proxy instead of per-page checks:
+ * Proxy runs before the page even starts rendering.
  * An unauthorized user never loads the page JS, never triggers
  * server components, never hits the database. Fastest possible rejection.
  *
@@ -30,7 +36,7 @@ import { hasMinRole, type Role } from "@/shared/types/auth";
 const PUBLIC_ROUTES = ["/login", "/register"];
 const AUTH_API_PREFIX = "/api/auth";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.AUTH_SECRET });
   const isLoggedIn = !!token;
   const pathname = req.nextUrl.pathname;
@@ -84,9 +90,9 @@ export async function middleware(req: NextRequest) {
  * Matcher config — skip static assets and Next.js internals.
  *
  * WHY this pattern:
- * Without a matcher, middleware runs on EVERY request including
+ * Without a matcher, the proxy runs on EVERY request including
  * images, fonts, and webpack chunks. This regex excludes those,
- * so middleware only fires for actual page/API navigations.
+ * so the proxy only fires for actual page/API navigations.
  */
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
