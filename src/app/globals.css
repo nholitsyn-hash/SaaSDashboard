@@ -89,6 +89,31 @@
   --radius-xl: var(--radius-xl);
   --radius-2xl: var(--radius-2xl);
   --radius-full: var(--radius-full);
+
+}
+
+/*
+ * Breakpoints — declared in a regular @theme block (NOT @theme inline).
+ *
+ * WHY not @theme inline like the other tokens:
+ * @theme inline preserves var() references in the generated CSS. That's
+ * fine for properties like `color: var(--primary)` — CSS resolves them
+ * at runtime. But breakpoints become `@media (width >= 768px)` rules at
+ * build time, and media queries can't contain var() — the browser
+ * evaluates them before custom properties are available. Tailwind needs
+ * literal values here.
+ *
+ * Change values to customize breakpoints. If we ever want runtime access
+ * to the raw numbers (e.g. from JS), declare the same values in tokens.css
+ * as `--bp-*` and keep the two in sync.
+ */
+
+@theme {
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
 }
 
 /*

@@ -44,11 +44,36 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-screen bg-bg-base">
+      {/*
+       * Skip link — WCAG SC 2.4.1. Visible only when focused.
+       * Keyboard users tabbing into the page hit this first and can
+       * jump past the sidebar's ~10 nav items straight to page content.
+       */}
+      <a
+        href="#main-content"
+        className="
+          sr-only focus:not-sr-only
+          focus:fixed focus:top-4 focus:left-4 focus:z-[60]
+          focus:rounded-lg focus:bg-primary
+          focus:px-4 focus:py-2 focus:text-sm focus:font-medium
+          focus:text-white focus:shadow-lg
+          focus:outline-none focus:ring-2 focus:ring-border-focus
+        "
+      >
+        Skip to main content
+      </a>
+
       <Sidebar userRole={user.role} />
       <SidebarDrawer userRole={user.role} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar user={user} />
-        <main className="flex-1">{children}</main>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 focus:outline-none"
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

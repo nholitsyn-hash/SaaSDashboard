@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/shared/ui/ThemeProvider";
+import { AppToaster } from "@/shared/ui/AppToaster";
 import "./globals.css";
 
 /**
@@ -52,7 +53,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <SessionProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            {children}
+            <AppToaster />
+          </ThemeProvider>
         </SessionProvider>
       </body>
     </html>

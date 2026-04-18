@@ -24,9 +24,11 @@ import {
   LineChart,
   BarChart,
   PieChart,
+  HeatmapChart,
   type LineSeriesOption,
   type BarSeriesOption,
   type PieSeriesOption,
+  type HeatmapSeriesOption,
 } from "echarts/charts";
 import {
   GridComponent,
@@ -35,10 +37,12 @@ import {
   TitleComponent,
   DatasetComponent,
   TransformComponent,
+  VisualMapComponent,
   type GridComponentOption,
   type TooltipComponentOption,
   type LegendComponentOption,
   type TitleComponentOption,
+  type VisualMapComponentOption,
 } from "echarts/components";
 import { LabelLayout, UniversalTransition } from "echarts/features";
 import { CanvasRenderer } from "echarts/renderers";
@@ -47,12 +51,14 @@ echarts.use([
   LineChart,
   BarChart,
   PieChart,
+  HeatmapChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,
   TitleComponent,
   DatasetComponent,
   TransformComponent,
+  VisualMapComponent,
   LabelLayout,
   UniversalTransition,
   CanvasRenderer,
@@ -70,10 +76,12 @@ export type ECOption = echarts.ComposeOption<
   | LineSeriesOption
   | BarSeriesOption
   | PieSeriesOption
+  | HeatmapSeriesOption
   | GridComponentOption
   | TooltipComponentOption
   | LegendComponentOption
   | TitleComponentOption
+  | VisualMapComponentOption
 >;
 
 export { echarts };

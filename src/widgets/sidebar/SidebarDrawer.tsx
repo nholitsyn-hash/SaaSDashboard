@@ -56,6 +56,7 @@ export function SidebarDrawer({ userRole }: SidebarDrawerProps) {
             fixed inset-0 z-40
             bg-black/50 backdrop-blur-sm
             opacity-0 transition-opacity duration-200
+            motion-reduce:transition-none
             data-[state=open]:opacity-100
             lg:hidden
           "
@@ -67,6 +68,7 @@ export function SidebarDrawer({ userRole }: SidebarDrawerProps) {
             flex w-72 max-w-[85vw] flex-col
             bg-bg-surface shadow-lg
             -translate-x-full transition-transform duration-200 ease-out
+            motion-reduce:transition-none
             data-[state=open]:translate-x-0
             lg:hidden
           "

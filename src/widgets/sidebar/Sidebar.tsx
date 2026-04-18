@@ -56,6 +56,7 @@ export function Sidebar({ userRole }: SidebarProps) {
         h-screen sticky top-0
         bg-bg-surface border-r border-border-default
         transition-[width] duration-200 ease-out
+        motion-reduce:transition-none
       "
     >
       <SidebarBrand

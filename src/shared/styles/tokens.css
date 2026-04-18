@@ -259,7 +259,25 @@
 }
 
 /* =============================================================================
-   7. DARK MODE OVERRIDES
+   7. BREAKPOINTS — see globals.css
+
+   Viewport breakpoints are declared in globals.css inside a regular @theme
+   block, NOT here as :root CSS variables.
+
+   WHY they can't live in tokens.css like the other tokens:
+   CSS @media queries are evaluated at parse time against the viewport, so
+   they cannot reference `var(--bp-xl)` — the var() isn't resolved at that
+   stage. Tailwind generates `@media (width >= …)` rules from the
+   `--breakpoint-*` values in @theme, and those values must be concrete
+   literals (not var references) or the generated media queries break.
+
+   Current values (in globals.css):
+     sm: 640px, md: 768px, lg: 1024px, xl: 1280px, 2xl: 1536px
+     (Tailwind v4 defaults — change in globals.css if customizing.)
+   ============================================================================= */
+
+/* =============================================================================
+   8. DARK MODE OVERRIDES
 
    Only semantic tokens change. Raw scale stays the same.
    WHY [data-theme="dark"] instead of @media (prefers-color-scheme):
