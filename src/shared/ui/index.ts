@@ -6,6 +6,7 @@ export { Typography } from "./Typography";
 export { Toggle } from "./Toggle";
 export { ThemeProvider } from "./ThemeProvider";
 export { ThemeToggle } from "./ThemeToggle";
+export { PagePlaceholder } from "./PagePlaceholder";
 export { KpiCard } from "./KpiCard";
 export type { KpiDelta, KpiTrend } from "./KpiCard";
 export { ChartCard } from "./ChartCard";

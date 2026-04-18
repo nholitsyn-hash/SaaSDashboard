@@ -25,16 +25,38 @@ import { hasMinRole, type Role } from "@/shared/types/auth";
  * server components, never hits the database. Fastest possible rejection.
  *
  * Route protection matrix:
- *   /login          → public (redirect to /dashboard if logged in)
- *   /dashboard/**   → any authenticated user
- *   /admin/**       → super_admin only
- *   /api/auth/**    → public (Auth.js handles internally)
- *   /api/**         → authenticated (returns 401 JSON)
- *   everything else → public (landing page, showcase, static assets)
+ *   /login, /register → public (redirect to /dashboard if logged in)
+ *   /admin/**         → super_admin only
+ *   AUTHED_PREFIXES   → any authenticated user (redirect to /login if not)
+ *   /api/auth/**      → public (Auth.js handles internally)
+ *   /api/**           → authenticated (returns 401 JSON)
+ *   everything else   → public (landing page, showcase, static assets)
+ *
+ * WHY maintain AUTHED_PREFIXES as a list (not "anything-not-public"):
+ * Explicit-allow is safer than implicit-deny when the surface has a
+ * mixed public/private root. Our landing page lives at `/` — a catch-all
+ * "auth required unless listed public" rule would block it. Listing the
+ * app routes explicitly keeps the public surface (landing, showcase) open
+ * without ceremony and makes the protected surface easy to audit.
  */
 
 const PUBLIC_ROUTES = ["/login", "/register"];
 const AUTH_API_PREFIX = "/api/auth";
+
+/**
+ * Routes rendered inside the (app) layout — every authenticated page in
+ * the shell. Keep this in sync with folders under src/app/(app)/.
+ */
+const AUTHED_PREFIXES = [
+  "/dashboard",
+  "/analytics",
+  "/reports",
+  "/customers",
+  "/subscriptions",
+  "/signups",
+  "/ai-assistant",
+  "/settings",
+];
 
 export async function proxy(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.AUTH_SECRET });
@@ -74,8 +96,8 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Dashboard and other protected routes: require any authenticated user
-  if (pathname.startsWith("/dashboard")) {
+  // Authenticated app routes: require any logged-in user
+  if (AUTHED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     if (!isLoggedIn) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
