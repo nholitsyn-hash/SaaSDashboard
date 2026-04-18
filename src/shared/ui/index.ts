@@ -8,5 +8,6 @@ export { ThemeProvider } from "./ThemeProvider";
 export { KpiCard } from "./KpiCard";
 export type { KpiDelta, KpiTrend } from "./KpiCard";
 export { ChartCard } from "./ChartCard";
+export { Chart } from "./Chart";
 export { DataTable } from "./DataTable";
 export type { Column, PaginationState } from "./DataTable";

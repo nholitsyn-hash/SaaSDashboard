@@ -8,14 +8,17 @@ import {
   KpiCard,
   Typography,
 } from "@/shared/ui";
+import { MrrChart } from "@/widgets/mrr-chart";
+import { ActiveUsersChart } from "@/widgets/active-users-chart";
+import { RevenueByPlanChart } from "@/widgets/revenue-by-plan-chart";
+import { RevenueByRegionChart } from "@/widgets/revenue-by-region-chart";
+import { ConversionChart } from "@/widgets/conversion-chart";
+import { ChurnSparkline } from "@/widgets/churn-sparkline";
 import { redirect } from "next/navigation";
 
 /**
- * Dashboard — Phase 3 in progress.
- *
- * This iteration previews the three shared/ui primitives (KpiCard, ChartCard,
- * DataTable) with mock data. Step 3 replaces the ChartCard placeholder with
- * real ECharts widgets; Step 5 finalizes layout + responsive + real mock data.
+ * Dashboard — Phase 3, Step 3.
+ * Widgets are now live; Step 5 will finalize the responsive grid.
  */
 
 interface Signup {
@@ -114,7 +117,8 @@ export default async function DashboardPage() {
           <KpiCard
             label="Churn Rate"
             value="3.2%"
-            delta={{ value: "-0.4%", trend: "down", label: "vs last month" }}
+            delta={{ value: "-0.6%", trend: "down", label: "vs last month" }}
+            sparkline={<ChurnSparkline />}
           />
           <KpiCard
             label="Trial → Paid"
@@ -124,14 +128,33 @@ export default async function DashboardPage() {
         </section>
 
         <section
-          aria-label="Charts"
+          aria-label="Revenue and usage trends"
           className="grid grid-cols-1 gap-4 lg:grid-cols-2"
         >
           <ChartCard title="Monthly Recurring Revenue" subtitle="Last 30 days">
-            <ChartPlaceholder label="MRR line chart — Step 3" />
+            <MrrChart />
           </ChartCard>
           <ChartCard title="Active Users" subtitle="Daily, last 30 days">
-            <ChartPlaceholder label="Area chart — Step 3" />
+            <ActiveUsersChart />
+          </ChartCard>
+        </section>
+
+        <section
+          aria-label="Breakdowns"
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+        >
+          <ChartCard title="Revenue by Plan" subtitle="Current month">
+            <RevenueByPlanChart />
+          </ChartCard>
+          <ChartCard title="Revenue by Region" subtitle="Current month">
+            <RevenueByRegionChart />
+          </ChartCard>
+          <ChartCard
+            title="Trial → Paid Conversion"
+            subtitle="Current period"
+            className="md:col-span-2 xl:col-span-1"
+          >
+            <ConversionChart />
           </ChartCard>
         </section>
 
@@ -155,13 +178,5 @@ export default async function DashboardPage() {
         </section>
       </div>
     </main>
-  );
-}
-
-function ChartPlaceholder({ label }: { label: string }) {
-  return (
-    <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-border-default bg-bg-muted/40 text-sm text-text-tertiary">
-      {label}
-    </div>
   );
 }
