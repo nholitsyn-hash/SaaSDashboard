@@ -83,7 +83,7 @@ export function KpiCard({
       </div>
 
       {(delta || sparkline) && (
-        <footer className="flex items-center justify-between gap-3 @sm:gap-4">
+        <footer className="flex items-center justify-between gap-3">
           {delta && (
             <span
               className={`
@@ -96,14 +96,14 @@ export function KpiCard({
               <span aria-hidden>{trendArrow[delta.trend]}</span>
               <span>{delta.value}</span>
               {delta.label && (
-                <span className="text-text-tertiary font-normal">
+                <span className="text-text-tertiary font-normal hidden @[220px]:inline">
                   {delta.label}
                 </span>
               )}
             </span>
           )}
           {sparkline && (
-            <div className="flex-1 min-w-0 h-8 hidden @sm:block">
+            <div className="flex-1 min-w-0 h-8">
               {sparkline}
             </div>
           )}

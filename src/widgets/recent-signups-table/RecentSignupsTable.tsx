@@ -77,7 +77,7 @@ export function RecentSignupsTable() {
           <h3 className="text-sm font-semibold text-text-primary">
             Recent Signups
           </h3>
-          <div className="w-64">
+          <div className="w-full sm:w-64">
             <Input placeholder="Filter by name or email…" />
           </div>
         </>

@@ -74,7 +74,7 @@ export function DataTable<T>({
       `}
     >
       {toolbar && (
-        <div className="flex items-center justify-between gap-3 border-b border-border-default px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-default px-5 py-3">
           {toolbar}
         </div>
       )}

@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-bg-base p-6 lg:p-8">
+    <main className="min-h-screen bg-bg-base p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
