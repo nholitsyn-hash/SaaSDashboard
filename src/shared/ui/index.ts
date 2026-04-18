@@ -5,3 +5,8 @@ export { Badge } from "./Badge";
 export { Typography } from "./Typography";
 export { Toggle } from "./Toggle";
 export { ThemeProvider } from "./ThemeProvider";
+export { KpiCard } from "./KpiCard";
+export type { KpiDelta, KpiTrend } from "./KpiCard";
+export { ChartCard } from "./ChartCard";
+export { DataTable } from "./DataTable";
+export type { Column, PaginationState } from "./DataTable";
