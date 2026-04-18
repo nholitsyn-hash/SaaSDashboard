@@ -71,6 +71,22 @@ const lightTheme = {
     color: palette.slate900,
     fontFamily: "inherit",
   },
+  /**
+   * Bar series label defaults.
+   *
+   * WHY here in the theme (not per-widget):
+   * ECharts defaults `textBorderColor` to white with a positive width for
+   * contrast against series fills. That creates a "glowing" halo that
+   * looks wrong on our surfaces and inverts badly in dark mode.
+   * Setting a theme-wide color + zero border fixes every bar chart at once.
+   */
+  bar: {
+    label: {
+      color: palette.slate700,
+      textBorderWidth: 0,
+      textBorderColor: "transparent",
+    },
+  },
   title: {
     textStyle: { color: palette.slate900 },
     subtextStyle: { color: palette.slate500 },
@@ -112,6 +128,13 @@ const darkTheme = {
   textStyle: {
     color: palette.slate50,
     fontFamily: "inherit",
+  },
+  bar: {
+    label: {
+      color: palette.slate200,
+      textBorderWidth: 0,
+      textBorderColor: "transparent",
+    },
   },
   title: {
     textStyle: { color: palette.slate50 },
