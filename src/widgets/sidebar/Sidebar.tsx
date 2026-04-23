@@ -57,6 +57,7 @@ export function Sidebar({ userRole }: SidebarProps) {
         bg-bg-surface border-r border-border-default
         transition-[width] duration-200 ease-out
         motion-reduce:transition-none
+        print:hidden
       "
     >
       <SidebarBrand

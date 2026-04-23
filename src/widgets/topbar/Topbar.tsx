@@ -40,6 +40,7 @@ export function Topbar({ user }: TopbarProps) {
         flex h-16 items-center gap-3
         border-b border-border-default bg-bg-surface
         px-4 sm:px-6
+        print:hidden
       "
     >
       <button
