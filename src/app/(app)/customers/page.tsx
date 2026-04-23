@@ -1,20 +1,13 @@
 import { UserPlus } from "lucide-react";
-import { KpiCard, Typography } from "@/shared/ui";
-import { CustomersList } from "@/widgets/customers-list";
-import { customerStatusCounts } from "@/widgets/customers-list/mock";
+import { Typography } from "@/shared/ui";
+import { CustomersKpis, CustomersList } from "@/widgets/customers-list";
 
 /**
- * Customers — directory of all customer accounts.
- * Page is RSC; the tabbed list is a client island.
+ * Customers — directory of all customer accounts (live data).
+ * Page stays an RSC; KPIs and list are independent client islands
+ * that share the `useCustomers()` cache via TanStack Query dedup.
  */
 export default function CustomersPage() {
-  const kpis = {
-    total: customerStatusCounts.all,
-    active: customerStatusCounts.active,
-    trial: customerStatusCounts.trial,
-    churned: customerStatusCounts.churned,
-  };
-
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -43,28 +36,7 @@ export default function CustomersPage() {
           </button>
         </header>
 
-        <section
-          aria-label="Customer KPIs"
-          className="grid grid-cols-2 gap-4 xl:grid-cols-4"
-        >
-          <KpiCard label="Total Customers" value={kpis.total} />
-          <KpiCard
-            label="Active"
-            value={kpis.active}
-            delta={{ value: "+3", trend: "up", label: "this month" }}
-          />
-          <KpiCard
-            label="Trial"
-            value={kpis.trial}
-            delta={{ value: "+1", trend: "up", label: "this week" }}
-          />
-          <KpiCard
-            label="Churned"
-            value={kpis.churned}
-            delta={{ value: "-1", trend: "up", label: "vs last month" }}
-          />
-        </section>
-
+        <CustomersKpis />
         <CustomersList />
       </div>
     </div>

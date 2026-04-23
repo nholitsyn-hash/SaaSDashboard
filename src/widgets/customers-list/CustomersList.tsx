@@ -1,26 +1,36 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Badge, DataTable, Input, Tabs, type Column } from "@/shared/ui";
 import {
-  mockCustomers,
-  customerStatusCounts,
+  Badge,
+  Button,
+  DataTable,
+  Input,
+  Tabs,
+  type Column,
+} from "@/shared/ui";
+import {
+  useCustomers,
   type Customer,
   type CustomerPlan,
   type CustomerStatus,
-} from "./mock";
+} from "@/entities/customer";
 
 /**
- * CustomersList — tabbed, searchable customer directory.
+ * CustomersList — tabbed, searchable customer directory (live data).
  *
- * WHY search stays as local state (not URL param):
- * Pass 1 is visual — search debouncing + URL sync lands in pass 2 when
- * real data arrives. Local state keeps the widget self-contained and
- * gets replaced cleanly with a store/param when the time comes.
+ * WHY still-client-side search/filter despite real data now:
+ * Pagination + server-side filtering land when we have enough rows
+ * to warrant them (hundreds). With ~20 rows, client filtering is
+ * instant and keeps the URL clean. When volume grows, we swap
+ * `.filter()` for query params + server where clauses — the API
+ * shape stays the same.
  *
- * WHY the tabs-filter uses `useMemo`:
- * rows.filter runs on every keystroke; memoizing against (tab, search)
- * prevents recompute when an unrelated re-render happens.
+ * WHY one hook invocation here (not lifted to the page):
+ * The parent `CustomersKpis` also calls `useCustomers()`. TanStack
+ * Query dedupes identical queryKeys — two consumers, ONE network
+ * request, ONE cache entry. Sharing via props would force a client
+ * page wrapper; this is cleaner.
  */
 
 const planVariant: Record<CustomerPlan, "default" | "primary" | "secondary"> = {
@@ -95,12 +105,25 @@ const columns: Column<Customer>[] = [
 type TabKey = "all" | CustomerStatus;
 
 export function CustomersList() {
+  const { data, isLoading, isError, error, refetch } = useCustomers();
   const [tab, setTab] = useState<TabKey>("all");
   const [search, setSearch] = useState("");
 
+  const allCustomers = data ?? [];
+
+  const counts = useMemo(
+    () => ({
+      all: allCustomers.length,
+      active: allCustomers.filter((c) => c.status === "active").length,
+      trial: allCustomers.filter((c) => c.status === "trial").length,
+      churned: allCustomers.filter((c) => c.status === "churned").length,
+    }),
+    [allCustomers]
+  );
+
   const visibleRows = useMemo(() => {
     const normalized = search.trim().toLowerCase();
-    return mockCustomers.filter((c) => {
+    return allCustomers.filter((c) => {
       if (tab !== "all" && c.status !== tab) return false;
       if (!normalized) return true;
       return (
@@ -109,7 +132,24 @@ export function CustomersList() {
         c.email.toLowerCase().includes(normalized)
       );
     });
-  }, [tab, search]);
+  }, [allCustomers, tab, search]);
+
+  const emptyState = isLoading
+    ? "Loading customers…"
+    : isError
+      ? (
+        <div className="flex flex-col items-center gap-3 py-4">
+          <p className="text-sm text-danger-text">
+            {error?.message ?? "Failed to load customers"}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      )
+      : search
+        ? `No customers match "${search}"`
+        : "No customers in this view";
 
   return (
     <Tabs.Root
@@ -120,16 +160,16 @@ export function CustomersList() {
       <div className="flex flex-wrap items-center gap-3">
         <Tabs.List>
           <Tabs.Trigger value="all">
-            All <span className="text-xs text-text-tertiary">({customerStatusCounts.all})</span>
+            All <CountHint value={counts.all} loading={isLoading} />
           </Tabs.Trigger>
           <Tabs.Trigger value="active">
-            Active <span className="text-xs text-text-tertiary">({customerStatusCounts.active})</span>
+            Active <CountHint value={counts.active} loading={isLoading} />
           </Tabs.Trigger>
           <Tabs.Trigger value="trial">
-            Trial <span className="text-xs text-text-tertiary">({customerStatusCounts.trial})</span>
+            Trial <CountHint value={counts.trial} loading={isLoading} />
           </Tabs.Trigger>
           <Tabs.Trigger value="churned">
-            Churned <span className="text-xs text-text-tertiary">({customerStatusCounts.churned})</span>
+            Churned <CountHint value={counts.churned} loading={isLoading} />
           </Tabs.Trigger>
         </Tabs.List>
         <div className="ml-auto w-full sm:w-72">
@@ -138,6 +178,7 @@ export function CustomersList() {
             placeholder="Search company, contact, or email…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            disabled={isLoading || isError}
           />
         </div>
       </div>
@@ -152,13 +193,23 @@ export function CustomersList() {
             pageSize: visibleRows.length || 1,
             total: visibleRows.length,
           }}
-          emptyState={
-            search
-              ? `No customers match "${search}"`
-              : "No customers in this view"
-          }
+          emptyState={emptyState}
         />
       </Tabs.Content>
     </Tabs.Root>
+  );
+}
+
+function CountHint({
+  value,
+  loading,
+}: {
+  value: number;
+  loading: boolean;
+}) {
+  return (
+    <span className="text-xs text-text-tertiary">
+      ({loading ? "—" : value})
+    </span>
   );
 }
