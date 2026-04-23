@@ -33,6 +33,22 @@ enum Role {
   viewer
 }
 
+/// WHY values mirror our TypeScript mock unions exactly:
+///   Prisma enums generate a Postgres ENUM type AND a matching TS literal
+///   union. Keeping Prisma member names === mock string values means the
+///   API boundary stays zero-translation — no mapping layer needed.
+enum CustomerPlan {
+  Free
+  Pro
+  Enterprise
+}
+
+enum CustomerStatus {
+  active
+  trial
+  churned
+}
+
 // ---------------------------------------------------------------------------
 // Core business models
 // ---------------------------------------------------------------------------
@@ -62,8 +78,37 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   memberships Membership[]
+  customers   Customer[]
 
   @@map("organizations")
+}
+
+/// A customer account owned by an Organization.
+///
+/// WHY `mrrCents: Int` (not Float dollars):
+///   Money in floats causes $0.01 rounding bugs over time. Integer cents
+///   is the industry standard. Our display layer divides by 100 before
+///   formatting. Stripe uses cents too — when we wire real data later,
+///   no conversion layer needed.
+model Customer {
+  id             String         @id @default(cuid())
+  organizationId String
+  company        String
+  contact        String
+  email          String
+  plan           CustomerPlan
+  status         CustomerStatus
+  mrrCents       Int
+  region         String
+  joinedAt       DateTime
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([organizationId, plan])
+  @@map("customers")
 }
 
 /// Join table: a User belongs to an Organization with a specific Role.
