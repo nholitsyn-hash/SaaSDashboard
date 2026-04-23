@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   Badge,
+  Button,
   DataTable,
   DateRangePicker,
   Input,
@@ -10,31 +11,21 @@ import {
   type DatePreset,
 } from "@/shared/ui";
 import {
-  mockSubscriptions,
+  useSubscriptions,
   type SubPlan,
   type SubStatus,
   type Subscription,
-} from "./mock";
-
-/**
- * SubscriptionsList — filterable subscription directory.
- *
- * WHY filter-bar above the table (not tabs):
- * Subscription queries usually combine multiple dimensions (plan + status
- * + date range). Tabs work for single-dimension segmentation (Customers
- * → lifecycle state) but become crowded with two dimensions. A classic
- * filter bar scales better.
- *
- * Pass 1 filters are visual — DateRangePicker doesn't yet drive the rows,
- * search does. Wiring the range + plan/status selects is Pass 2.
- */
+} from "@/entities/subscription";
 
 const planVariant: Record<SubPlan, "primary" | "secondary"> = {
   Pro: "primary",
   Enterprise: "secondary",
 };
 
-const statusVariant: Record<SubStatus, "success" | "warning" | "default" | "danger"> = {
+const statusVariant: Record<
+  SubStatus,
+  "success" | "warning" | "default" | "danger"
+> = {
   active: "success",
   trial: "warning",
   paused: "default",
@@ -96,22 +87,44 @@ const columns: Column<Subscription>[] = [
     header: "Renews",
     align: "right",
     render: (row) => (
-      <span className="tabular-nums text-text-secondary">{row.renewsAt}</span>
+      <span className="tabular-nums text-text-secondary">
+        {row.renewsAt ?? "—"}
+      </span>
     ),
   },
 ];
 
 export function SubscriptionsList() {
+  const { data, isLoading, isError, error, refetch } = useSubscriptions();
   const [range, setRange] = useState<DatePreset>("30d");
   const [search, setSearch] = useState("");
 
+  const allSubs = data ?? [];
+
   const visibleRows = useMemo(() => {
     const normalized = search.trim().toLowerCase();
-    if (!normalized) return mockSubscriptions;
-    return mockSubscriptions.filter((s) =>
+    if (!normalized) return allSubs;
+    return allSubs.filter((s) =>
       s.customer.toLowerCase().includes(normalized)
     );
-  }, [search]);
+  }, [allSubs, search]);
+
+  const emptyState = isLoading
+    ? "Loading subscriptions…"
+    : isError
+      ? (
+        <div className="flex flex-col items-center gap-3 py-4">
+          <p className="text-sm text-danger-text">
+            {error?.message ?? "Failed to load subscriptions"}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      )
+      : search
+        ? `No subscriptions match "${search}"`
+        : "No subscriptions found";
 
   return (
     <div className="flex flex-col gap-4">
@@ -123,6 +136,7 @@ export function SubscriptionsList() {
             placeholder="Search customer…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            disabled={isLoading || isError}
           />
         </div>
       </div>
@@ -136,11 +150,7 @@ export function SubscriptionsList() {
           pageSize: visibleRows.length || 1,
           total: visibleRows.length,
         }}
-        emptyState={
-          search
-            ? `No subscriptions match "${search}"`
-            : "No subscriptions found"
-        }
+        emptyState={emptyState}
       />
     </div>
   );

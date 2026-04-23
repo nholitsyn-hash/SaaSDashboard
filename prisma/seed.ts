@@ -123,8 +123,81 @@ async function main() {
     })),
   });
 
+  // Subscriptions — link each mock row to the Customer we just created
+  // by company name.
+  //
+  // WHY look up by company (not email, not id):
+  //   Customer ids are cuids generated at insert time — we can't know
+  //   them ahead of the seed. Company name is unique within our mock
+  //   and acts as a natural join key.
+  await db.subscription.deleteMany({
+    where: { customer: { organizationId: org.id } },
+  });
+
+  const customerRecords = await db.customer.findMany({
+    where: { organizationId: org.id },
+    select: { id: true, company: true },
+  });
+  const customerIdByCompany = new Map(
+    customerRecords.map((c) => [c.company, c.id])
+  );
+
+  type SubscriptionSeed = {
+    customer: string;
+    plan: "Pro" | "Enterprise";
+    cycle: "monthly" | "annual";
+    status: "active" | "trial" | "paused" | "canceled";
+    mrr: number;
+    startedAt: string;
+    renewsAt: string | null;
+  };
+
+  const subscriptionSeeds: SubscriptionSeed[] = [
+    { customer: "Northwind Labs", plan: "Enterprise", cycle: "annual", status: "active", mrr: 4200, startedAt: "2023-11-14", renewsAt: "2026-11-14" },
+    { customer: "Meridian Systems", plan: "Enterprise", cycle: "annual", status: "active", mrr: 3600, startedAt: "2024-02-03", renewsAt: "2027-02-03" },
+    { customer: "Glacier Works", plan: "Enterprise", cycle: "monthly", status: "active", mrr: 3250, startedAt: "2024-05-22", renewsAt: "2026-05-22" },
+    { customer: "Harbor Studios", plan: "Enterprise", cycle: "annual", status: "active", mrr: 2800, startedAt: "2024-07-09", renewsAt: "2026-07-09" },
+    { customer: "Cedar Ventures", plan: "Enterprise", cycle: "annual", status: "active", mrr: 4500, startedAt: "2024-09-30", renewsAt: "2026-09-30" },
+    { customer: "Aperture Media", plan: "Pro", cycle: "monthly", status: "active", mrr: 1450, startedAt: "2025-01-18", renewsAt: "2026-05-18" },
+    { customer: "Pinnacle Partners", plan: "Pro", cycle: "monthly", status: "active", mrr: 1220, startedAt: "2025-03-04", renewsAt: "2026-05-04" },
+    { customer: "Summit & Co", plan: "Pro", cycle: "annual", status: "active", mrr: 1150, startedAt: "2025-04-12", renewsAt: "2026-04-12" },
+    { customer: "Acme Corp", plan: "Pro", cycle: "monthly", status: "active", mrr: 980, startedAt: "2025-08-02", renewsAt: "2026-05-02" },
+    { customer: "Beacon Industries", plan: "Pro", cycle: "monthly", status: "active", mrr: 860, startedAt: "2025-11-27", renewsAt: "2026-04-27" },
+    { customer: "Lighthouse Ltd", plan: "Pro", cycle: "monthly", status: "active", mrr: 740, startedAt: "2026-01-15", renewsAt: "2026-05-15" },
+    { customer: "Spruce Analytics", plan: "Pro", cycle: "monthly", status: "active", mrr: 700, startedAt: "2026-01-22", renewsAt: "2026-05-22" },
+    { customer: "Kite Software", plan: "Pro", cycle: "monthly", status: "trial", mrr: 0, startedAt: "2026-04-02", renewsAt: "2026-04-16" },
+    { customer: "Tangent Labs", plan: "Pro", cycle: "monthly", status: "trial", mrr: 0, startedAt: "2026-04-06", renewsAt: "2026-04-20" },
+    { customer: "Foxglove Inc", plan: "Enterprise", cycle: "annual", status: "trial", mrr: 0, startedAt: "2026-04-10", renewsAt: "2026-04-24" },
+    { customer: "Blueprint Studio", plan: "Pro", cycle: "monthly", status: "trial", mrr: 0, startedAt: "2026-04-15", renewsAt: "2026-04-29" },
+    { customer: "Brightside App", plan: "Pro", cycle: "monthly", status: "paused", mrr: 0, startedAt: "2025-09-12", renewsAt: null },
+    { customer: "Arcade Robotics", plan: "Enterprise", cycle: "annual", status: "canceled", mrr: 0, startedAt: "2025-02-18", renewsAt: null },
+    { customer: "Quartz Digital", plan: "Pro", cycle: "monthly", status: "canceled", mrr: 0, startedAt: "2025-06-11", renewsAt: null },
+    { customer: "Obsidian Media", plan: "Pro", cycle: "monthly", status: "canceled", mrr: 0, startedAt: "2025-07-22", renewsAt: null },
+  ];
+
+  const subscriptionData = subscriptionSeeds
+    .map((s) => {
+      const customerId = customerIdByCompany.get(s.customer);
+      if (!customerId) {
+        console.warn(`Skipping subscription for missing customer: ${s.customer}`);
+        return null;
+      }
+      return {
+        customerId,
+        plan: s.plan,
+        cycle: s.cycle,
+        status: s.status,
+        mrrCents: s.mrr * 100,
+        startedAt: new Date(s.startedAt),
+        renewsAt: s.renewsAt ? new Date(s.renewsAt) : null,
+      };
+    })
+    .filter((s): s is NonNullable<typeof s> => s !== null);
+
+  await db.subscription.createMany({ data: subscriptionData });
+
   console.log(
-    `Seeded: Acme Corp + admin@example.com (super_admin) + ${customerSeeds.length} customers`
+    `Seeded: Acme Corp + admin@example.com (super_admin) + ${customerSeeds.length} customers + ${subscriptionData.length} subscriptions`
   );
 }
 

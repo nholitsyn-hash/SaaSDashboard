@@ -1,8 +1,8 @@
-import { KpiCard, Typography } from "@/shared/ui";
-import { SubscriptionsList } from "@/widgets/subscriptions-list";
-import { subscriptionKpis } from "@/widgets/subscriptions-list/mock";
-
-const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
+import { Typography } from "@/shared/ui";
+import {
+  SubscriptionsKpis,
+  SubscriptionsList,
+} from "@/widgets/subscriptions-list";
 
 export default function SubscriptionsPage() {
   return (
@@ -15,32 +15,7 @@ export default function SubscriptionsPage() {
           </Typography>
         </header>
 
-        <section
-          aria-label="Subscription KPIs"
-          className="grid grid-cols-2 gap-4 xl:grid-cols-4"
-        >
-          <KpiCard
-            label="Active"
-            value={subscriptionKpis.active}
-            delta={{ value: "+4", trend: "up", label: "this month" }}
-          />
-          <KpiCard
-            label="Total MRR"
-            value={usd(subscriptionKpis.mrr)}
-            delta={{ value: "+12.4%", trend: "up", label: "vs last month" }}
-          />
-          <KpiCard
-            label="ARPU"
-            value={usd(subscriptionKpis.arpu)}
-            delta={{ value: "+$42", trend: "up", label: "vs last month" }}
-          />
-          <KpiCard
-            label="Net new"
-            value={subscriptionKpis.netNew}
-            delta={{ value: "+2", trend: "up", label: "vs last month" }}
-          />
-        </section>
-
+        <SubscriptionsKpis />
         <SubscriptionsList />
       </div>
     </div>

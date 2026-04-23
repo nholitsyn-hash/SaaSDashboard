@@ -49,6 +49,23 @@ enum CustomerStatus {
   churned
 }
 
+enum SubPlan {
+  Pro
+  Enterprise
+}
+
+enum SubStatus {
+  active
+  trial
+  paused
+  canceled
+}
+
+enum BillingCycle {
+  monthly
+  annual
+}
+
 // ---------------------------------------------------------------------------
 // Core business models
 // ---------------------------------------------------------------------------
@@ -104,11 +121,42 @@ model Customer {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
 
   @@index([organizationId, status])
   @@index([organizationId, plan])
   @@map("customers")
+}
+
+/// A billing subscription owned by a Customer.
+///
+/// WHY `renewsAt` is nullable:
+///   Paused and canceled subscriptions have no next renewal date.
+///   The UI renders "—" for null — cleaner than pretending a date exists.
+///
+/// WHY separate enums from Customer:
+///   Customer.plan ("Free" | "Pro" | "Enterprise") and Subscription.plan
+///   ("Pro" | "Enterprise") don't overlap — Free users don't have a paid
+///   subscription. Keeping the enums separate reflects that constraint
+///   at the type level.
+model Subscription {
+  id         String       @id @default(cuid())
+  customerId String
+  plan       SubPlan
+  cycle      BillingCycle
+  status     SubStatus
+  mrrCents   Int
+  startedAt  DateTime
+  renewsAt   DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([status])
+  @@map("subscriptions")
 }
 
 /// Join table: a User belongs to an Organization with a specific Role.
