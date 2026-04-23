@@ -10,6 +10,7 @@ export { PagePlaceholder } from "./PagePlaceholder";
 export { DateRangePicker, type DatePreset } from "./DateRangePicker";
 export { ExportMenu } from "./ExportMenu";
 export { AppToaster } from "./AppToaster";
+export { Tabs } from "./Tabs";
 export { KpiCard } from "./KpiCard";
 export type { KpiDelta, KpiTrend } from "./KpiCard";
 export { ChartCard } from "./ChartCard";
