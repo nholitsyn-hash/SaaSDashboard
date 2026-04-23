@@ -56,7 +56,7 @@ export function ReportDetail({ slug }: ReportDetailProps) {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 print:p-0">
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6 print:max-w-none">
         <ReportHeader template={template} />
         <ReportBody slug={template.slug} />
       </div>
