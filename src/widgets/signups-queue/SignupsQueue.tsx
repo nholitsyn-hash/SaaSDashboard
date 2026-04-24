@@ -3,29 +3,23 @@
 import { useMemo, useState } from "react";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
-import { Badge, DataTable, Tabs, type Column } from "@/shared/ui";
+import { Badge, Button, DataTable, Tabs, type Column } from "@/shared/ui";
+import type { CustomerPlan } from "@/entities/customer";
 import {
-  mockSignupRequests,
-  signupCounts,
-  type SignupPlan,
+  useSignupRequests,
   type SignupRequest,
   type SignupState,
-} from "./mock";
+} from "@/entities/signup-request";
 
 /**
  * SignupsQueue — pending-first queue with inline approve/reject actions.
  *
- * WHY inline row actions instead of a bulk-select + top toolbar:
- * Reviewing signups is a per-row judgment ("does this email look real?",
- * "does the company match the plan?"). Per-row Approve/Reject buttons
- * match that mental model better than "check 5 boxes → bulk approve".
- * Bulk actions can layer on top later without disturbing this flow.
- *
- * Pass 1 fires toasts only — no row removal, no state change. Pass 2
- * wires handlers to TanStack mutations and optimistically removes rows.
+ * Pass 1 (now): live data from /api/signups. Approve/Reject buttons still
+ * fire toasts only — they'll be wired to mutations when we build the
+ * approval flow (separate step).
  */
 
-const planVariant: Record<SignupPlan, "default" | "primary" | "secondary"> = {
+const planVariant: Record<CustomerPlan, "default" | "primary" | "secondary"> = {
   Free: "default",
   Pro: "primary",
   Enterprise: "secondary",
@@ -106,10 +100,36 @@ function useColumns(state: SignupState): Column<SignupRequest>[] {
 }
 
 export function SignupsQueue() {
+  const { data, isLoading, isError, error, refetch } = useSignupRequests();
   const [state, setState] = useState<SignupState>("pending");
   const columns = useColumns(state);
 
-  const rows = mockSignupRequests.filter((s) => s.state === state);
+  const all = data ?? [];
+  const rows = all.filter((s) => s.state === state);
+
+  const counts = useMemo(
+    () => ({
+      pending: all.filter((s) => s.state === "pending").length,
+      approved: all.filter((s) => s.state === "approved").length,
+      rejected: all.filter((s) => s.state === "rejected").length,
+    }),
+    [all]
+  );
+
+  const emptyState = isLoading
+    ? "Loading signups…"
+    : isError
+      ? (
+        <div className="flex flex-col items-center gap-3 py-4">
+          <p className="text-sm text-danger-text">
+            {error?.message ?? "Failed to load signups"}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      )
+      : "No signups in this queue";
 
   return (
     <Tabs.Root
@@ -120,20 +140,24 @@ export function SignupsQueue() {
       <Tabs.List>
         <Tabs.Trigger value="pending">
           Pending
-          <Badge variant="danger" className="text-[10px]">
-            {signupCounts.pending}
-          </Badge>
+          {isLoading ? (
+            <span className="text-xs text-text-tertiary">(—)</span>
+          ) : (
+            <Badge variant="danger" className="text-[10px]">
+              {counts.pending}
+            </Badge>
+          )}
         </Tabs.Trigger>
         <Tabs.Trigger value="approved">
-          Approved
+          Approved{" "}
           <span className="text-xs text-text-tertiary">
-            ({signupCounts.approved})
+            ({isLoading ? "—" : counts.approved})
           </span>
         </Tabs.Trigger>
         <Tabs.Trigger value="rejected">
-          Rejected
+          Rejected{" "}
           <span className="text-xs text-text-tertiary">
-            ({signupCounts.rejected})
+            ({isLoading ? "—" : counts.rejected})
           </span>
         </Tabs.Trigger>
       </Tabs.List>
@@ -148,7 +172,7 @@ export function SignupsQueue() {
             pageSize: rows.length || 1,
             total: rows.length,
           }}
-          emptyState="No signups in this queue"
+          emptyState={emptyState}
         />
       </Tabs.Content>
     </Tabs.Root>

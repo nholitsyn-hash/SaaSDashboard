@@ -196,8 +196,56 @@ async function main() {
 
   await db.subscription.createMany({ data: subscriptionData });
 
+  // Signup requests (21: 12 pending, 6 approved, 3 rejected)
+  await db.signupRequest.deleteMany({ where: { organizationId: org.id } });
+
+  type SignupRequestSeed = {
+    name: string;
+    email: string;
+    company: string;
+    requestedPlan: "Free" | "Pro" | "Enterprise";
+    state: "pending" | "approved" | "rejected";
+    signedUpAt: string;
+  };
+
+  const signupRequestSeeds: SignupRequestSeed[] = [
+    { name: "Emma Carter", email: "emma@acme.co", company: "Acme Corp", requestedPlan: "Pro", state: "pending", signedUpAt: "2026-04-17" },
+    { name: "Liam Walsh", email: "liam@northwind.io", company: "Northwind Labs", requestedPlan: "Enterprise", state: "pending", signedUpAt: "2026-04-17" },
+    { name: "Sophia Reed", email: "sophia@lab.dev", company: "Lab Dev", requestedPlan: "Free", state: "pending", signedUpAt: "2026-04-16" },
+    { name: "Noah Bennett", email: "noah@mailbox.co", company: "Mailbox Co", requestedPlan: "Pro", state: "pending", signedUpAt: "2026-04-16" },
+    { name: "Ava Sullivan", email: "ava@meridian.io", company: "Meridian Systems", requestedPlan: "Free", state: "pending", signedUpAt: "2026-04-15" },
+    { name: "Mason Clark", email: "mason@aperture.co", company: "Aperture Media", requestedPlan: "Pro", state: "pending", signedUpAt: "2026-04-15" },
+    { name: "Isabella Mitchell", email: "isabella@glacier.io", company: "Glacier Works", requestedPlan: "Enterprise", state: "pending", signedUpAt: "2026-04-14" },
+    { name: "James Parker", email: "james@vantage.dev", company: "Vantage", requestedPlan: "Free", state: "pending", signedUpAt: "2026-04-14" },
+    { name: "Mia Thompson", email: "mia@pinnacle.io", company: "Pinnacle Partners", requestedPlan: "Pro", state: "pending", signedUpAt: "2026-04-13" },
+    { name: "Benjamin Foster", email: "ben@lighthouse.co", company: "Lighthouse Ltd", requestedPlan: "Enterprise", state: "pending", signedUpAt: "2026-04-13" },
+    { name: "Charlotte Hayes", email: "charlotte@spruce.dev", company: "Spruce Analytics", requestedPlan: "Pro", state: "pending", signedUpAt: "2026-04-12" },
+    { name: "Henry Morgan", email: "henry@beacon.io", company: "Beacon Industries", requestedPlan: "Free", state: "pending", signedUpAt: "2026-04-12" },
+    { name: "Grace Parker", email: "grace@kite.dev", company: "Kite Software", requestedPlan: "Pro", state: "approved", signedUpAt: "2026-04-10" },
+    { name: "Oliver Reed", email: "oliver@tangent.io", company: "Tangent Labs", requestedPlan: "Pro", state: "approved", signedUpAt: "2026-04-09" },
+    { name: "Ella Foster", email: "ella@foxglove.co", company: "Foxglove Inc", requestedPlan: "Enterprise", state: "approved", signedUpAt: "2026-04-08" },
+    { name: "Nathan Wells", email: "nathan@blueprint.co", company: "Blueprint Studio", requestedPlan: "Pro", state: "approved", signedUpAt: "2026-04-07" },
+    { name: "Lucas Bennett", email: "lucas@cedar.vc", company: "Cedar Ventures", requestedPlan: "Enterprise", state: "approved", signedUpAt: "2026-04-06" },
+    { name: "Amelia Rivera", email: "amelia@summit.co", company: "Summit & Co", requestedPlan: "Pro", state: "approved", signedUpAt: "2026-04-05" },
+    { name: "Dexter Quinn", email: "dex@unknown-org.xyz", company: "— unverified —", requestedPlan: "Enterprise", state: "rejected", signedUpAt: "2026-04-11" },
+    { name: "Zane Keller", email: "zane@test.example", company: "Test Test", requestedPlan: "Pro", state: "rejected", signedUpAt: "2026-04-09" },
+    { name: "Aria Vance", email: "spam-bot@temp-mail.io", company: "—", requestedPlan: "Free", state: "rejected", signedUpAt: "2026-04-07" },
+  ];
+
+  await db.signupRequest.createMany({
+    data: signupRequestSeeds.map((s) => ({
+      organizationId: org.id,
+      name: s.name,
+      email: s.email,
+      company: s.company,
+      requestedPlan: s.requestedPlan,
+      state: s.state,
+      signedUpAt: new Date(s.signedUpAt),
+    })),
+  });
+
   console.log(
-    `Seeded: Acme Corp + admin@example.com (super_admin) + ${customerSeeds.length} customers + ${subscriptionData.length} subscriptions`
+    `Seeded: Acme Corp + admin@example.com (super_admin) + ${customerSeeds.length} customers + ${subscriptionData.length} subscriptions + ${signupRequestSeeds.length} signup requests`
   );
 }
 

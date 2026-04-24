@@ -66,6 +66,12 @@ enum BillingCycle {
   annual
 }
 
+enum SignupState {
+  pending
+  approved
+  rejected
+}
+
 // ---------------------------------------------------------------------------
 // Core business models
 // ---------------------------------------------------------------------------
@@ -94,10 +100,41 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships Membership[]
-  customers   Customer[]
+  memberships    Membership[]
+  customers      Customer[]
+  signupRequests SignupRequest[]
 
   @@map("organizations")
+}
+
+/// Inbound signup awaiting admin review.
+///
+/// WHY separate from User:
+///   A User row exists only AFTER approval — we don't want pre-approval
+///   signups to clutter the auth table with accounts that can't log in.
+///   Keeping unapproved requests in their own table mirrors real SaaS
+///   admin flows and makes role-based filtering trivial.
+///
+/// WHY reuse CustomerPlan (not a new enum):
+///   The requested plan is the same vocabulary (Free/Pro/Enterprise) a
+///   real Customer ends up with. Separate enums would drift and force
+///   translation code.
+model SignupRequest {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  email          String
+  company        String
+  requestedPlan  CustomerPlan
+  state          SignupState  @default(pending)
+  signedUpAt     DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, state])
+  @@map("signup_requests")
 }
 
 /// A customer account owned by an Organization.
