@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { ChevronDown, LogOut, Settings as SettingsIcon } from "lucide-react";
 import type { Role } from "@/shared/types/auth";
+import { initialsFrom } from "@/shared/utils/initials";
 
 interface TopbarUserMenuProps {
   user: {
@@ -134,20 +135,6 @@ function Avatar({ initials }: { initials: string }) {
       {initials}
     </div>
   );
-}
-
-function initialsFrom(
-  name?: string | null,
-  email?: string | null
-): string {
-  if (name) {
-    const parts = name.trim().split(/\s+/);
-    const letters = parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "");
-    const joined = letters.join("");
-    if (joined) return joined;
-  }
-  if (email) return email[0]?.toUpperCase() ?? "?";
-  return "?";
 }
 
 function roleLabel(role: Role): string {

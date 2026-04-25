@@ -39,11 +39,12 @@ async function main() {
 
   const user = await db.user.upsert({
     where: { email: "admin@example.com" },
-    update: {},
+    update: { lastActiveAt: new Date() },
     create: {
       email: "admin@example.com",
       name: "Admin User",
       passwordHash,
+      lastActiveAt: new Date(),
     },
   });
 
@@ -60,6 +61,87 @@ async function main() {
       organizationId: org.id,
       role: "super_admin",
     },
+  });
+
+  // Team members — 6 additional users + memberships.
+  //
+  // WHY relative offsets for lastActiveAt:
+  //   Hardcoded ISO timestamps would drift the "Active now / 2h ago"
+  //   labels every day after seeding. Subtracting from new Date() makes
+  //   the labels stable relative to whenever the seed runs.
+  const minutesAgo = (n: number) => new Date(Date.now() - n * 60 * 1000);
+  const hoursAgo = (n: number) => new Date(Date.now() - n * 60 * 60 * 1000);
+  const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+
+  type TeamMemberSeed = {
+    email: string;
+    name: string;
+    role: "super_admin" | "admin" | "viewer";
+    lastActiveAt: Date;
+  };
+
+  const teamMemberSeeds: TeamMemberSeed[] = [
+    { email: "sarah@acme.co", name: "Sarah Whitfield", role: "admin", lastActiveAt: minutesAgo(12) },
+    { email: "david@acme.co", name: "David Chen", role: "admin", lastActiveAt: hoursAgo(1) },
+    { email: "emily@acme.co", name: "Emily Roberts", role: "admin", lastActiveAt: daysAgo(1) },
+    { email: "michael@acme.co", name: "Michael Hayes", role: "viewer", lastActiveAt: daysAgo(2) },
+    { email: "jessica@acme.co", name: "Jessica Palmer", role: "viewer", lastActiveAt: daysAgo(7) },
+    { email: "ryan@acme.co", name: "Ryan Sullivan", role: "viewer", lastActiveAt: daysAgo(21) },
+  ];
+
+  for (const m of teamMemberSeeds) {
+    const member = await db.user.upsert({
+      where: { email: m.email },
+      update: { lastActiveAt: m.lastActiveAt, name: m.name },
+      create: {
+        email: m.email,
+        name: m.name,
+        passwordHash,
+        lastActiveAt: m.lastActiveAt,
+      },
+    });
+
+    await db.membership.upsert({
+      where: {
+        userId_organizationId: {
+          userId: member.id,
+          organizationId: org.id,
+        },
+      },
+      update: { role: m.role },
+      create: {
+        userId: member.id,
+        organizationId: org.id,
+        role: m.role,
+      },
+    });
+  }
+
+  // Pending invitations
+  await db.invitation.deleteMany({
+    where: { organizationId: org.id, status: "pending" },
+  });
+
+  const inviteSeeds: Array<{
+    email: string;
+    role: "admin" | "viewer";
+    sentHoursAgo: number;
+  }> = [
+    { email: "kevin@acme.co", role: "admin", sentHoursAgo: 2 },
+    { email: "laura@acme.co", role: "viewer", sentHoursAgo: 24 },
+    { email: "marcus@acme.co", role: "viewer", sentHoursAgo: 72 },
+  ];
+
+  await db.invitation.createMany({
+    data: inviteSeeds.map((inv) => ({
+      organizationId: org.id,
+      email: inv.email,
+      role: inv.role,
+      status: "pending" as const,
+      invitedById: user.id,
+      createdAt: hoursAgo(inv.sentHoursAgo),
+      expiresAt: daysAgo(-7), // 7 days from now
+    })),
   });
 
   // Customers
@@ -245,7 +327,7 @@ async function main() {
   });
 
   console.log(
-    `Seeded: Acme Corp + admin@example.com (super_admin) + ${customerSeeds.length} customers + ${subscriptionData.length} subscriptions + ${signupRequestSeeds.length} signup requests`
+    `Seeded: Acme Corp + admin@example.com (super_admin) + ${teamMemberSeeds.length} team members + ${inviteSeeds.length} invitations + ${customerSeeds.length} customers + ${subscriptionData.length} subscriptions + ${signupRequestSeeds.length} signup requests`
   );
 }
 

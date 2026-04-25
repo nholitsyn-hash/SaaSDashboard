@@ -72,6 +72,13 @@ enum SignupState {
   rejected
 }
 
+enum InviteStatus {
+  pending
+  accepted
+  revoked
+  expired
+}
+
 // ---------------------------------------------------------------------------
 // Core business models
 // ---------------------------------------------------------------------------
@@ -83,12 +90,17 @@ model User {
   passwordHash  String?
   image         String?
   emailVerified DateTime?
+  /// Most-recent activity timestamp.
+  /// In production, bumped on session refresh / API hit. For mock data we
+  /// seed values that produce realistic "Active now / 2 hours ago" labels.
+  lastActiveAt  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  memberships Membership[]
-  accounts    Account[]
-  sessions    Session[]
+  memberships     Membership[]
+  accounts        Account[]
+  sessions        Session[]
+  sentInvitations Invitation[] @relation("InvitationSender")
 
   @@map("users")
 }
@@ -103,8 +115,38 @@ model Organization {
   memberships    Membership[]
   customers      Customer[]
   signupRequests SignupRequest[]
+  invitations    Invitation[]
 
   @@map("organizations")
+}
+
+/// Workspace invitation — pending until accepted or revoked.
+///
+/// WHY separate from User:
+///   Invitees don't have user accounts yet. Storing them here keeps auth
+///   tables free of pre-account rows and makes "resend" / "revoke" a
+///   one-row mutation.
+///
+/// WHY @@unique([organizationId, email]):
+///   Same email can't have two open invitations to the same org.
+///   The same email CAN have invitations to different orgs.
+model Invitation {
+  id             String       @id @default(cuid())
+  organizationId String
+  email          String
+  role           Role         @default(viewer)
+  status         InviteStatus @default(pending)
+  invitedById    String
+  createdAt      DateTime     @default(now())
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy    User         @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, email])
+  @@index([organizationId, status])
+  @@map("invitations")
 }
 
 /// Inbound signup awaiting admin review.

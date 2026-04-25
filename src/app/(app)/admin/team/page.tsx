@@ -2,9 +2,8 @@
 
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { KpiCard, Typography } from "@/shared/ui";
-import { TeamMembers } from "@/widgets/team-members";
-import { teamCounts } from "@/widgets/team-members/mock";
+import { Typography } from "@/shared/ui";
+import { TeamKpis, TeamMembers } from "@/widgets/team-members";
 
 export default function AdminTeamPage() {
   return (
@@ -37,15 +36,7 @@ export default function AdminTeamPage() {
           </button>
         </header>
 
-        <section
-          aria-label="Team KPIs"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-3"
-        >
-          <KpiCard label="Members" value={teamCounts.members} />
-          <KpiCard label="Admins" value={teamCounts.admins} />
-          <KpiCard label="Pending invites" value={teamCounts.invites} />
-        </section>
-
+        <TeamKpis />
         <TeamMembers />
       </div>
     </div>

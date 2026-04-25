@@ -4,39 +4,29 @@ import { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { MoreHorizontal, ShieldCheck, Trash2, UserCog } from "lucide-react";
 import { toast } from "sonner";
-import { Badge, DataTable, Tabs, type Column } from "@/shared/ui";
-import type { Role } from "@/shared/types/auth";
+import { Badge, Button, DataTable, Tabs, type Column } from "@/shared/ui";
+import { initialsFrom } from "@/shared/utils/initials";
+import { formatRelativeTime } from "@/shared/utils/relative-time";
 import {
-  mockPendingInvites,
-  mockTeamMembers,
-  teamCounts,
-  type PendingInvite,
+  useTeamInvites,
+  useTeamMembers,
+  type TeamInvite,
   type TeamMember,
-} from "./mock";
+  type TeamRole,
+} from "@/entities/team";
 
 /**
  * TeamMembers — tabbed list of active members + pending invites.
- *
- * WHY roles-badge variant-mapping:
- * Each role has a semantic color — super_admin (violet/secondary) reads
- * as "highest privilege", admin (primary blue) is standard, viewer
- * (default grey) is read-only. Consistent with how GitHub/Linear paint
- * role badges.
- *
- * WHY a row-level actions dropdown (not inline buttons):
- * Team-row actions are destructive (remove), role-changing, or
- * secondary (resend invite). Tucking them in a ⋯ menu per row keeps
- * the table scannable. Inline buttons for 4+ actions per row would be
- * noise.
+ * Both tabs are independent queries; TanStack dedupes per key.
  */
 
-const roleVariant: Record<Role, "default" | "primary" | "secondary"> = {
+const roleVariant: Record<TeamRole, "default" | "primary" | "secondary"> = {
   viewer: "default",
   admin: "primary",
   super_admin: "secondary",
 };
 
-const roleLabel: Record<Role, string> = {
+const roleLabel: Record<TeamRole, string> = {
   viewer: "Viewer",
   admin: "Admin",
   super_admin: "Super admin",
@@ -46,6 +36,11 @@ type TabKey = "members" | "invites";
 
 export function TeamMembers() {
   const [tab, setTab] = useState<TabKey>("members");
+  const membersQuery = useTeamMembers();
+  const invitesQuery = useTeamInvites();
+
+  const memberCount = membersQuery.data?.length;
+  const inviteCount = invitesQuery.data?.length;
 
   return (
     <Tabs.Root
@@ -57,13 +52,13 @@ export function TeamMembers() {
         <Tabs.Trigger value="members">
           Members{" "}
           <span className="text-xs text-text-tertiary">
-            ({teamCounts.members})
+            ({memberCount ?? "—"})
           </span>
         </Tabs.Trigger>
         <Tabs.Trigger value="invites">
           Pending invites{" "}
           <span className="text-xs text-text-tertiary">
-            ({teamCounts.invites})
+            ({inviteCount ?? "—"})
           </span>
         </Tabs.Trigger>
       </Tabs.List>
@@ -71,30 +66,72 @@ export function TeamMembers() {
       <Tabs.Content value="members">
         <DataTable<TeamMember>
           columns={memberColumns}
-          rows={mockTeamMembers}
+          rows={membersQuery.data ?? []}
           getRowKey={(row) => row.id}
           pagination={{
             page: 1,
-            pageSize: mockTeamMembers.length,
-            total: mockTeamMembers.length,
+            pageSize: (membersQuery.data?.length || 1),
+            total: membersQuery.data?.length ?? 0,
           }}
+          emptyState={
+            membersQuery.isLoading
+              ? "Loading members…"
+              : membersQuery.isError
+                ? (
+                  <ErrorRetry
+                    message={membersQuery.error?.message}
+                    onRetry={() => membersQuery.refetch()}
+                  />
+                )
+                : "No members in this workspace"
+          }
         />
       </Tabs.Content>
 
       <Tabs.Content value="invites">
-        <DataTable<PendingInvite>
+        <DataTable<TeamInvite>
           columns={inviteColumns}
-          rows={mockPendingInvites}
+          rows={invitesQuery.data ?? []}
           getRowKey={(row) => row.id}
           pagination={{
             page: 1,
-            pageSize: mockPendingInvites.length,
-            total: mockPendingInvites.length,
+            pageSize: (invitesQuery.data?.length || 1),
+            total: invitesQuery.data?.length ?? 0,
           }}
-          emptyState="No pending invitations"
+          emptyState={
+            invitesQuery.isLoading
+              ? "Loading invitations…"
+              : invitesQuery.isError
+                ? (
+                  <ErrorRetry
+                    message={invitesQuery.error?.message}
+                    onRetry={() => invitesQuery.refetch()}
+                  />
+                )
+                : "No pending invitations"
+          }
         />
       </Tabs.Content>
     </Tabs.Root>
+  );
+}
+
+function ErrorRetry({
+  message,
+  onRetry,
+}: {
+  message?: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 py-4">
+      <p className="text-sm text-danger-text">
+        {message ?? "Failed to load"}
+      </p>
+      <Button variant="outline" size="sm" onClick={onRetry}>
+        Retry
+      </Button>
+    </div>
   );
 }
 
@@ -109,7 +146,7 @@ const memberColumns: Column<TeamMember>[] = [
           aria-hidden
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-xs font-bold text-white"
         >
-          {row.initials}
+          {initialsFrom(row.name, row.email)}
         </div>
         <div className="flex flex-col">
           <span className="font-medium text-text-primary">{row.name}</span>
@@ -130,7 +167,9 @@ const memberColumns: Column<TeamMember>[] = [
     header: "Last active",
     sortable: true,
     render: (row) => (
-      <span className="text-text-secondary">{row.lastActive}</span>
+      <span className="text-text-secondary">
+        {formatRelativeTime(row.lastActiveAt)}
+      </span>
     ),
   },
   {
@@ -141,7 +180,7 @@ const memberColumns: Column<TeamMember>[] = [
   },
 ];
 
-const inviteColumns: Column<PendingInvite>[] = [
+const inviteColumns: Column<TeamInvite>[] = [
   {
     key: "email",
     header: "Email",
@@ -166,7 +205,11 @@ const inviteColumns: Column<PendingInvite>[] = [
   {
     key: "sentAt",
     header: "Sent",
-    render: (row) => <span className="text-text-secondary">{row.sentAt}</span>,
+    render: (row) => (
+      <span className="text-text-secondary">
+        {formatRelativeTime(row.sentAt)}
+      </span>
+    ),
   },
   {
     key: "actions",
@@ -236,7 +279,7 @@ function MemberActions({ member }: { member: TeamMember }) {
   );
 }
 
-function InviteActions({ invite }: { invite: PendingInvite }) {
+function InviteActions({ invite }: { invite: TeamInvite }) {
   return (
     <div className="flex items-center justify-end gap-2">
       <button
