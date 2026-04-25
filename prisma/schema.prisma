@@ -79,6 +79,19 @@ enum InviteStatus {
   expired
 }
 
+enum IntegrationStatus {
+  connected
+  available
+}
+
+enum IntegrationCategory {
+  Payments
+  CRM
+  Communication
+  Analytics
+  Automation
+}
+
 // ---------------------------------------------------------------------------
 // Core business models
 // ---------------------------------------------------------------------------
@@ -116,8 +129,36 @@ model Organization {
   customers      Customer[]
   signupRequests SignupRequest[]
   invitations    Invitation[]
+  integrations   Integration[]
 
   @@map("organizations")
+}
+
+/// A workspace's view of a third-party integration.
+///
+/// WHY one row per (org × integration), not two tables (catalog + connection):
+///   In production the catalog is rarely-changing, central data; connections
+///   are per-org with credentials and webhooks. For a portfolio mock that
+///   distinction adds boilerplate without UX value. One table = one row per
+///   "integration card" the org sees, with `status` flipping the badge.
+///   Refactor to two tables when we wire real OAuth flows.
+model Integration {
+  id             String              @id @default(cuid())
+  organizationId String
+  slug           String
+  name           String
+  category       IntegrationCategory
+  description    String
+  status         IntegrationStatus   @default(available)
+  connectedAt    DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, status])
+  @@map("integrations")
 }
 
 /// Workspace invitation — pending until accepted or revoked.

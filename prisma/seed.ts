@@ -326,8 +326,43 @@ async function main() {
     })),
   });
 
+  // Integrations — 8 known integrations, 4 connected + 4 available.
+  await db.integration.deleteMany({ where: { organizationId: org.id } });
+
+  type IntegrationSeed = {
+    slug: string;
+    name: string;
+    category: "Payments" | "CRM" | "Communication" | "Analytics" | "Automation";
+    description: string;
+    status: "connected" | "available";
+    connectedAt: Date | null;
+  };
+
+  const integrationSeeds: IntegrationSeed[] = [
+    { slug: "stripe", name: "Stripe", category: "Payments", description: "Process payments and manage subscriptions.", status: "connected", connectedAt: daysAgo(60) },
+    { slug: "paddle", name: "Paddle", category: "Payments", description: "Merchant of Record payments with tax handling.", status: "available", connectedAt: null },
+    { slug: "hubspot", name: "HubSpot", category: "CRM", description: "Sync contacts, deals, and companies with your CRM.", status: "connected", connectedAt: daysAgo(180) },
+    { slug: "slack", name: "Slack", category: "Communication", description: "Real-time alerts for signups, churn, and revenue events.", status: "connected", connectedAt: daysAgo(21) },
+    { slug: "zapier", name: "Zapier", category: "Automation", description: "Connect to 5,000+ apps without writing code.", status: "available", connectedAt: null },
+    { slug: "segment", name: "Segment", category: "Analytics", description: "Pipe your customer events to every downstream tool.", status: "available", connectedAt: null },
+    { slug: "intercom", name: "Intercom", category: "Communication", description: "Two-way sync of customers and conversation data.", status: "available", connectedAt: null },
+    { slug: "ga", name: "Google Analytics", category: "Analytics", description: "Track acquisition, behavior, and conversion funnels.", status: "connected", connectedAt: daysAgo(120) },
+  ];
+
+  await db.integration.createMany({
+    data: integrationSeeds.map((i) => ({
+      organizationId: org.id,
+      slug: i.slug,
+      name: i.name,
+      category: i.category,
+      description: i.description,
+      status: i.status,
+      connectedAt: i.connectedAt,
+    })),
+  });
+
   console.log(
-    `Seeded: Acme Corp + admin@example.com (super_admin) + ${teamMemberSeeds.length} team members + ${inviteSeeds.length} invitations + ${customerSeeds.length} customers + ${subscriptionData.length} subscriptions + ${signupRequestSeeds.length} signup requests`
+    `Seeded: Acme Corp + admin@example.com (super_admin) + ${teamMemberSeeds.length} team members + ${inviteSeeds.length} invitations + ${customerSeeds.length} customers + ${subscriptionData.length} subscriptions + ${signupRequestSeeds.length} signup requests + ${integrationSeeds.length} integrations`
   );
 }
 

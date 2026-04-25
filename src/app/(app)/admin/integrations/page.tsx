@@ -1,6 +1,8 @@
 import { Typography } from "@/shared/ui";
-import { IntegrationsGrid } from "@/widgets/integrations-grid";
-import { integrationCounts } from "@/widgets/integrations-grid/mock";
+import {
+  IntegrationsCount,
+  IntegrationsGrid,
+} from "@/widgets/integrations-grid";
 
 export default function AdminIntegrationsPage() {
   return (
@@ -13,14 +15,7 @@ export default function AdminIntegrationsPage() {
               Connect Stripe, Paddle, HubSpot, Slack and other data sources
             </Typography>
           </div>
-          <div className="text-sm text-text-tertiary">
-            <span className="font-semibold text-text-primary tabular-nums">
-              {integrationCounts.connected}
-            </span>{" "}
-            of{" "}
-            <span className="tabular-nums">{integrationCounts.total}</span>{" "}
-            connected
-          </div>
+          <IntegrationsCount />
         </header>
 
         <IntegrationsGrid />
