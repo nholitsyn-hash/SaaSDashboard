@@ -1,45 +1,69 @@
 "use client";
 
-import { ArrowUpRight, CreditCard, Download, ExternalLink } from "lucide-react";
-import { toast } from "sonner";
-import { Badge, DataTable, type Column } from "@/shared/ui";
 import {
-  currentPlan,
-  mockInvoices,
-  paymentMethod,
+  ArrowUpRight,
+  CreditCard,
+  Download,
+  ExternalLink,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Badge, Button, DataTable, type Column } from "@/shared/ui";
+import { formatRelativeTime } from "@/shared/utils/relative-time";
+import {
+  useBillingOverview,
+  type CurrentPlan,
   type Invoice,
   type InvoiceStatus,
+  type PaymentMethod,
   type UsageMetric,
-} from "./mock";
+} from "@/entities/billing";
 
 /**
- * BillingOverview — realistic "our own billing" page.
+ * BillingOverview — wired to the live `/api/billing/overview` endpoint.
  *
- * WHY every transactional button fires "Redirects to Stripe Customer
- * Portal" toast instead of opening a form:
- * Real production flow delegates card entry, plan changes, and invoice
- * retrieval to Stripe's hosted pages — PCI compliance lives there.
- * This mock replicates that boundary: we surface the data, Stripe owns
- * the transactions.
+ * WHY one query for the whole page:
+ *   Plan + payment method + invoices render together; one round trip
+ *   gives one loading state and one consistent snapshot of state.
  *
- * WHY usage meters beside the plan hero (not a separate card):
- * Usage is the quickest signal for "do I need to upgrade?" — putting it
- * at the top of the plan card is where eyes land first.
+ * WHY every transactional button stays a Stripe-redirect toast:
+ *   Real production delegates card entry, plan changes, and PDF
+ *   retrieval to Stripe's hosted pages. Toasts here communicate the
+ *   architecture intent — we surface data, Stripe owns transactions.
  */
 export function BillingOverview() {
+  const { data, isLoading, isError, error, refetch } = useBillingOverview();
+
+  if (isLoading) {
+    return (
+      <p className="text-sm text-text-tertiary">Loading billing overview…</p>
+    );
+  }
+  if (isError || !data) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-danger-subtle bg-danger-subtle/40 p-6">
+        <p className="text-sm text-danger-text">
+          {error?.message ?? "Failed to load billing overview"}
+        </p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      <PlanHero />
+      <PlanHero plan={data.plan} />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <PaymentMethodCard />
+        <PaymentMethodCard paymentMethod={data.paymentMethod} />
         <NeedHelpCard />
       </div>
-      <InvoicesSection />
+      <InvoicesSection invoices={data.invoices} />
     </div>
   );
 }
 
-function PlanHero() {
+function PlanHero({ plan }: { plan: CurrentPlan }) {
   const handleChangePlan = () =>
     toast.info("Change plan", {
       description: "Redirects to Stripe Customer Portal in production",
@@ -50,19 +74,19 @@ function PlanHero() {
       <div className="flex flex-col gap-4 border-b border-border-default px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <Badge variant="primary">{currentPlan.slug}</Badge>
+            <Badge variant="primary">{plan.tier}</Badge>
             <span className="text-xs text-text-tertiary">
-              {currentPlan.cycle === "monthly" ? "Monthly" : "Annual"} billing
+              {plan.cycle === "monthly" ? "Monthly" : "Annual"} billing
             </span>
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-3xl font-semibold text-text-primary tabular-nums">
-              ${currentPlan.priceMonthly}
+              ${plan.priceMonthly}
             </span>
             <span className="text-sm text-text-tertiary">/month</span>
           </div>
           <span className="text-xs text-text-secondary">
-            Next invoice {currentPlan.renewsOn}
+            Next invoice {formatRelativeTime(plan.renewsAt)}
           </span>
         </div>
         <button
@@ -87,11 +111,11 @@ function PlanHero() {
             Usage this cycle
           </h3>
           <span className="text-xs text-text-tertiary">
-            Resets {currentPlan.nextBillDate}
+            Resets {formatRelativeTime(plan.nextBillAt)}
           </span>
         </div>
         <div className="flex flex-col gap-3">
-          {currentPlan.usage.map((u) => (
+          {plan.usage.map((u) => (
             <UsageRow key={u.label} metric={u} />
           ))}
         </div>
@@ -132,11 +156,45 @@ function UsageRow({ metric }: { metric: UsageMetric }) {
   );
 }
 
-function PaymentMethodCard() {
+function PaymentMethodCard({
+  paymentMethod,
+}: {
+  paymentMethod: PaymentMethod | null;
+}) {
   const handleUpdate = () =>
     toast.info("Update payment method", {
       description: "Redirects to Stripe Customer Portal in production",
     });
+
+  if (!paymentMethod) {
+    return (
+      <article className="rounded-xl border border-border-default bg-bg-surface p-5 shadow-sm flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <CreditCard size={16} className="text-text-tertiary" />
+          <h3 className="text-sm font-semibold text-text-primary">
+            Payment method
+          </h3>
+        </div>
+        <p className="text-xs text-text-secondary">
+          No payment method on file. Add one to upgrade or extend trial.
+        </p>
+        <button
+          type="button"
+          onClick={handleUpdate}
+          className="
+            inline-flex items-center gap-1.5 self-start
+            rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white
+            transition-colors hover:bg-primary-hover
+            focus-visible:outline-none focus-visible:ring-2
+            focus-visible:ring-border-focus focus-visible:ring-offset-2
+          "
+        >
+          Add payment method
+          <ExternalLink size={12} />
+        </button>
+      </article>
+    );
+  }
 
   return (
     <article className="rounded-xl border border-border-default bg-bg-surface p-5 shadow-sm flex flex-col gap-4">
@@ -187,8 +245,8 @@ function NeedHelpCard() {
       <h3 className="text-sm font-semibold text-text-primary">Billing help</h3>
       <p className="text-xs text-text-secondary leading-relaxed">
         All invoices, tax documents, and payment history are stored in our
-        Stripe Customer Portal. Use the "Change plan" or "Update payment"
-        buttons to open the portal.
+        Stripe Customer Portal. Use the &quot;Change plan&quot; or &quot;Update
+        payment&quot; buttons to open the portal.
       </p>
       <button
         type="button"
@@ -211,19 +269,20 @@ function NeedHelpCard() {
   );
 }
 
-function InvoicesSection() {
+function InvoicesSection({ invoices }: { invoices: Invoice[] }) {
   return (
     <div className="flex flex-col gap-3">
       <h2 className="text-base font-semibold text-text-primary">Invoices</h2>
       <DataTable<Invoice>
         columns={invoiceColumns}
-        rows={mockInvoices}
+        rows={invoices}
         getRowKey={(row) => row.id}
         pagination={{
           page: 1,
-          pageSize: mockInvoices.length,
-          total: mockInvoices.length,
+          pageSize: invoices.length || 1,
+          total: invoices.length,
         }}
+        emptyState="No invoices yet"
       />
     </div>
   );

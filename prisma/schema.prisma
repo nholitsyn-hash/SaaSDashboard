@@ -92,6 +92,18 @@ enum IntegrationCategory {
   Automation
 }
 
+enum CardBrand {
+  Visa
+  Mastercard
+  Amex
+}
+
+enum InvoiceStatus {
+  paid
+  failed
+  upcoming
+}
+
 // ---------------------------------------------------------------------------
 // Core business models
 // ---------------------------------------------------------------------------
@@ -130,8 +142,70 @@ model Organization {
   signupRequests SignupRequest[]
   invitations    Invitation[]
   integrations   Integration[]
+  workspaceSub   WorkspaceSubscription?
 
   @@map("organizations")
+}
+
+/// The workspace's subscription to OUR SaaS (distinct from `Subscription`,
+/// which is OUR customers' subscriptions to the workspace).
+///
+/// WHY one row per Organization (`organizationId @unique`):
+///   An org has exactly one active billing arrangement at a time. Plan
+///   changes mutate the row; downgrades/upgrades aren't separate records.
+///   Historical plan changes belong in a separate audit table when needed.
+///
+/// WHY usage stored on this row (not a separate UsageSnapshot table):
+///   Mock-data simplicity. In production, usage is metered and changes
+///   constantly — would belong in a time-series table. Comment here so
+///   future-me doesn't think this is the right design at scale.
+///
+/// WHY payment method denormalized (not its own model):
+///   Real cards live in Stripe — we only cache `last4 + brand + exp` for
+///   display. No PII / no PCI scope. One row reused per workspace.
+model WorkspaceSubscription {
+  id                String       @id @default(cuid())
+  organizationId    String       @unique
+  planName          String
+  planTier          CustomerPlan
+  priceMonthlyCents Int
+  cycle             BillingCycle
+  nextBillAt        DateTime
+  renewsAt          DateTime
+  // Plan limits
+  eventsLimit       Int
+  seatsLimit        Int
+  storageLimitGb    Float
+  // Current usage
+  eventsUsed        Int          @default(0)
+  seatsUsed         Int          @default(0)
+  storageUsedGb     Float        @default(0)
+  // Cached payment method (real card lives in Stripe)
+  cardBrand         CardBrand?
+  cardLast4         String?
+  cardExpMonth      Int?
+  cardExpYear       Int?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoices     Invoice[]
+
+  @@map("workspace_subscriptions")
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  workspaceSubId String
+  number         String        @unique
+  date           DateTime
+  amountCents    Int
+  status         InvoiceStatus
+
+  workspaceSub WorkspaceSubscription @relation(fields: [workspaceSubId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceSubId, date])
+  @@map("invoices")
 }
 
 /// A workspace's view of a third-party integration.

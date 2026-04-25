@@ -361,8 +361,76 @@ async function main() {
     })),
   });
 
+  // Workspace subscription (Acme is on Pro)
+  //
+  // WHY upsert with `where: { organizationId }` (not by id):
+  //   organizationId is unique on the table, and we don't track the
+  //   previous workspace-sub row's id. Upsert by the natural unique key.
+  const workspaceSub = await db.workspaceSubscription.upsert({
+    where: { organizationId: org.id },
+    update: {
+      planName: "Professional",
+      planTier: "Pro",
+      priceMonthlyCents: 9900,
+      cycle: "monthly",
+      nextBillAt: daysAgo(-12), // ~12 days from now
+      renewsAt: daysAgo(-12),
+      eventsLimit: 10000,
+      seatsLimit: 10,
+      storageLimitGb: 10,
+      eventsUsed: 8400,
+      seatsUsed: 6,
+      storageUsedGb: 2.1,
+      cardBrand: "Visa",
+      cardLast4: "4242",
+      cardExpMonth: 4,
+      cardExpYear: 2028,
+    },
+    create: {
+      organizationId: org.id,
+      planName: "Professional",
+      planTier: "Pro",
+      priceMonthlyCents: 9900,
+      cycle: "monthly",
+      nextBillAt: daysAgo(-12),
+      renewsAt: daysAgo(-12),
+      eventsLimit: 10000,
+      seatsLimit: 10,
+      storageLimitGb: 10,
+      eventsUsed: 8400,
+      seatsUsed: 6,
+      storageUsedGb: 2.1,
+      cardBrand: "Visa",
+      cardLast4: "4242",
+      cardExpMonth: 4,
+      cardExpYear: 2028,
+    },
+  });
+
+  // Invoices — last 6 months, all paid, $99 each
+  await db.invoice.deleteMany({
+    where: { workspaceSubId: workspaceSub.id },
+  });
+  const invoiceSeeds = [
+    { number: "INV-2026-004", monthsAgo: 0, amountCents: 9900 },
+    { number: "INV-2026-003", monthsAgo: 1, amountCents: 9900 },
+    { number: "INV-2026-002", monthsAgo: 2, amountCents: 9900 },
+    { number: "INV-2026-001", monthsAgo: 3, amountCents: 9900 },
+    { number: "INV-2025-012", monthsAgo: 4, amountCents: 9900 },
+    { number: "INV-2025-011", monthsAgo: 5, amountCents: 9900 },
+  ];
+  await db.invoice.createMany({
+    data: invoiceSeeds.map((inv) => ({
+      workspaceSubId: workspaceSub.id,
+      number: inv.number,
+      date: daysAgo(inv.monthsAgo * 30),
+      amountCents: inv.amountCents,
+      status: "paid" as const,
+    })),
+  });
+
   console.log(
-    `Seeded: Acme Corp + admin@example.com (super_admin) + ${teamMemberSeeds.length} team members + ${inviteSeeds.length} invitations + ${customerSeeds.length} customers + ${subscriptionData.length} subscriptions + ${signupRequestSeeds.length} signup requests + ${integrationSeeds.length} integrations`
+    `Seeded: Acme Corp + admin@example.com (super_admin) + ${teamMemberSeeds.length} team members + ${inviteSeeds.length} invitations + ${customerSeeds.length} customers + ${subscriptionData.length} subscriptions + ${signupRequestSeeds.length} signup requests + ${integrationSeeds.length} integrations + workspace billing (${invoiceSeeds.length} invoices)`
   );
 }
 
