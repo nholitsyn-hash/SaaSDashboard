@@ -1,15 +1,16 @@
-import { ChartCard, KpiCard, Typography } from "@/shared/ui";
+import { ChartCard, Typography } from "@/shared/ui";
+import { DashboardKpis } from "@/widgets/dashboard-kpis";
 import { MrrChart } from "@/widgets/mrr-chart";
 import { ActiveUsersChart } from "@/widgets/active-users-chart";
 import { RevenueByPlanChart } from "@/widgets/revenue-by-plan-chart";
 import { RevenueByRegionChart } from "@/widgets/revenue-by-region-chart";
 import { ConversionChart } from "@/widgets/conversion-chart";
-import { ChurnSparkline } from "@/widgets/churn-sparkline";
 import { RecentSignupsTable } from "@/widgets/recent-signups-table";
 
 /**
- * Dashboard — composes Phase 3 widgets.
- * Auth check + ThemeToggle now handled by (app)/layout.tsx + Topbar.
+ * Dashboard — composes widgets that all consume `useDashboard()`.
+ * Page stays an RSC; each widget is its own client island and the
+ * shared TanStack cache means one network request feeds them all.
  */
 export default function DashboardPage() {
   return (
@@ -20,32 +21,7 @@ export default function DashboardPage() {
           <Typography variant="body-sm">SaaS performance overview</Typography>
         </header>
 
-        <section
-          aria-label="Key metrics"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
-        >
-          <KpiCard
-            label="MRR"
-            value="$48,250"
-            delta={{ value: "+12.4%", trend: "up", label: "vs last month" }}
-          />
-          <KpiCard
-            label="Active Users"
-            value="2,184"
-            delta={{ value: "+5.1%", trend: "up", label: "vs last month" }}
-          />
-          <KpiCard
-            label="Churn Rate"
-            value="3.2%"
-            delta={{ value: "-0.6%", trend: "down", label: "vs last month" }}
-            sparkline={<ChurnSparkline />}
-          />
-          <KpiCard
-            label="Trial → Paid"
-            value="27.8%"
-            delta={{ value: "+2.1%", trend: "up", label: "vs last month" }}
-          />
-        </section>
+        <DashboardKpis />
 
         <section
           aria-label="Revenue and usage trends"
