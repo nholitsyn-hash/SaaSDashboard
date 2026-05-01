@@ -1,15 +1,15 @@
-import { ChartCard, KpiCard } from "@/shared/ui";
+import { ChartCard } from "@/shared/ui";
 import { AnalyticsHeader } from "@/widgets/analytics-header";
+import { AnalyticsKpis } from "@/widgets/analytics-kpis";
 import { CohortRetentionHeatmap } from "@/widgets/cohort-retention-heatmap";
 import { MrrMovementChart } from "@/widgets/mrr-movement-chart";
 import { LtvByPlanChart } from "@/widgets/ltv-by-plan-chart";
 import { CustomerSegmentsChart } from "@/widgets/customer-segments-chart";
 
 /**
- * Analytics — deep SaaS metrics (Phase 4, Step 3).
- *
- * Composition only. Page is an RSC; the interactive header is a client
- * widget and every chart is its own client widget.
+ * Analytics — composes widgets that all consume `useAnalytics()`.
+ * Page stays an RSC; each widget is its own client island and the
+ * shared TanStack cache means one network request feeds them all.
  */
 export default function AnalyticsPage() {
   return (
@@ -17,36 +17,7 @@ export default function AnalyticsPage() {
       <div className="mx-auto max-w-7xl space-y-6">
         <AnalyticsHeader />
 
-        <section
-          aria-label="Analytics KPIs"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
-        >
-          <KpiCard
-            label="LTV"
-            value="$1,240"
-            delta={{ value: "+8.3%", trend: "up", label: "vs last 30d" }}
-          />
-          <KpiCard
-            label="CAC"
-            value="$412"
-            delta={{
-              value: "-6.2%",
-              // CAC going down is good → up-trend color.
-              trend: "up",
-              label: "vs last 30d",
-            }}
-          />
-          <KpiCard
-            label="Payback"
-            value="3.2 mo"
-            delta={{ value: "-0.4 mo", trend: "up", label: "vs last 30d" }}
-          />
-          <KpiCard
-            label="Net Revenue Retention"
-            value="112%"
-            delta={{ value: "+4.1pp", trend: "up", label: "vs last 30d" }}
-          />
-        </section>
+        <AnalyticsKpis />
 
         <section aria-label="Cohort retention">
           <ChartCard
