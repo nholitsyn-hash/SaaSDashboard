@@ -1,23 +1,16 @@
+import { z } from "zod";
 import type { Column } from "@/shared/ui";
 import type { CsvColumn } from "@/shared/utils/csv";
 
-export interface RegionRow {
-  id: string;
-  region: string;
-  mrr: number;
-  subscribers: number;
-  growthYoy: number;
-  share: number;
-}
-
-export const regionRows: RegionRow[] = [
-  { id: "1", region: "North America", mrr: 32650, subscribers: 203, growthYoy: 28.4, share: 48.3 },
-  { id: "2", region: "Europe", mrr: 15950, subscribers: 101, growthYoy: 18.7, share: 23.6 },
-  { id: "3", region: "United Kingdom", mrr: 7600, subscribers: 50, growthYoy: 14.2, share: 11.2 },
-  { id: "4", region: "APAC", mrr: 3800, subscribers: 25, growthYoy: 41.6, share: 5.6 },
-  { id: "5", region: "LATAM", mrr: 1100, subscribers: 11, growthYoy: 22.0, share: 1.6 },
-  { id: "6", region: "Global (Free)", mrr: 0, subscribers: 1840, growthYoy: 6.7, share: 9.7 },
-];
+export const RegionRowSchema = z.object({
+  id: z.string(),
+  region: z.string(),
+  mrr: z.number(),
+  subscribers: z.number(),
+  growthYoy: z.number(),
+  share: z.number(),
+});
+export type RegionRow = z.infer<typeof RegionRowSchema>;
 
 const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 const pct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;

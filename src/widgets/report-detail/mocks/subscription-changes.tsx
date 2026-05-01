@@ -1,31 +1,26 @@
+import { z } from "zod";
 import type { Column } from "@/shared/ui";
 import { Badge } from "@/shared/ui";
 import type { CsvColumn } from "@/shared/utils/csv";
 
-export type SubChangeAction = "upgrade" | "downgrade" | "cancel" | "new";
+export const SubChangeActionSchema = z.enum([
+  "upgrade",
+  "downgrade",
+  "cancel",
+  "new",
+]);
+export type SubChangeAction = z.infer<typeof SubChangeActionSchema>;
 
-export interface SubChangeRow {
-  id: string;
-  date: string;
-  customer: string;
-  action: SubChangeAction;
-  fromPlan: string;
-  toPlan: string;
-  mrrImpact: number; // positive or negative
-}
-
-export const subChangeRows: SubChangeRow[] = [
-  { id: "1", date: "2026-04-18", customer: "Emma Carter", action: "upgrade", fromPlan: "Pro", toPlan: "Enterprise", mrrImpact: 650 },
-  { id: "2", date: "2026-04-18", customer: "Noah Bennett", action: "new", fromPlan: "—", toPlan: "Pro", mrrImpact: 100 },
-  { id: "3", date: "2026-04-17", customer: "Olivia Hughes", action: "cancel", fromPlan: "Enterprise", toPlan: "—", mrrImpact: -750 },
-  { id: "4", date: "2026-04-17", customer: "Liam Walsh", action: "upgrade", fromPlan: "Pro", toPlan: "Enterprise", mrrImpact: 650 },
-  { id: "5", date: "2026-04-16", customer: "Sophia Reed", action: "downgrade", fromPlan: "Pro", toPlan: "Free", mrrImpact: -100 },
-  { id: "6", date: "2026-04-16", customer: "Mason Clark", action: "new", fromPlan: "—", toPlan: "Pro", mrrImpact: 100 },
-  { id: "7", date: "2026-04-15", customer: "Ava Sullivan", action: "upgrade", fromPlan: "Free", toPlan: "Pro", mrrImpact: 100 },
-  { id: "8", date: "2026-04-15", customer: "James Parker", action: "cancel", fromPlan: "Free", toPlan: "—", mrrImpact: 0 },
-  { id: "9", date: "2026-04-14", customer: "Charlotte Hayes", action: "upgrade", fromPlan: "Pro", toPlan: "Enterprise", mrrImpact: 650 },
-  { id: "10", date: "2026-04-14", customer: "Henry Morgan", action: "new", fromPlan: "—", toPlan: "Free", mrrImpact: 0 },
-];
+export const SubChangeRowSchema = z.object({
+  id: z.string(),
+  date: z.string(),
+  customer: z.string(),
+  action: SubChangeActionSchema,
+  fromPlan: z.string(),
+  toPlan: z.string(),
+  mrrImpact: z.number(),
+});
+export type SubChangeRow = z.infer<typeof SubChangeRowSchema>;
 
 const actionVariant: Record<SubChangeAction, "success" | "primary" | "warning" | "danger"> = {
   new: "success",

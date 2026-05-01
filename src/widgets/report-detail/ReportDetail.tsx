@@ -4,43 +4,72 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 import {
+  Button,
   DataTable,
   DateRangePicker,
   ExportMenu,
   Typography,
+  type Column,
   type DatePreset,
 } from "@/shared/ui";
-import { downloadCsv, toCsv } from "@/shared/utils/csv";
+import { downloadCsv, toCsv, type CsvColumn } from "@/shared/utils/csv";
+import { useReport } from "@/entities/report";
 import {
   findReportTemplate,
   type ReportSlug,
   type ReportTemplate,
 } from "@/widgets/report-templates-grid/mock";
-import { mrrRows, mrrColumns, mrrCsvColumns, type MrrRow } from "./mocks/mrr-breakdown";
-import { churnCohortRows, churnCohortColumns, churnCohortCsvColumns, type ChurnCohortRow } from "./mocks/churn-cohort";
-import { ltvRows, ltvColumns, ltvCsvColumns, type LtvRow } from "./mocks/ltv-by-plan";
-import { regionRows, regionColumns, regionCsvColumns, type RegionRow } from "./mocks/revenue-by-region";
-import { topCustomerRows, topCustomerColumns, topCustomerCsvColumns, type TopCustomerRow } from "./mocks/top-customers";
-import { subChangeRows, subChangeColumns, subChangeCsvColumns, type SubChangeRow } from "./mocks/subscription-changes";
+import {
+  MrrRowSchema,
+  mrrColumns,
+  mrrCsvColumns,
+  type MrrRow,
+} from "./mocks/mrr-breakdown";
+import {
+  ChurnCohortRowSchema,
+  churnCohortColumns,
+  churnCohortCsvColumns,
+  type ChurnCohortRow,
+} from "./mocks/churn-cohort";
+import {
+  LtvRowSchema,
+  ltvColumns,
+  ltvCsvColumns,
+  type LtvRow,
+} from "./mocks/ltv-by-plan";
+import {
+  RegionRowSchema,
+  regionColumns,
+  regionCsvColumns,
+  type RegionRow,
+} from "./mocks/revenue-by-region";
+import {
+  TopCustomerRowSchema,
+  topCustomerColumns,
+  topCustomerCsvColumns,
+  type TopCustomerRow,
+} from "./mocks/top-customers";
+import {
+  SubChangeRowSchema,
+  subChangeColumns,
+  subChangeCsvColumns,
+  type SubChangeRow,
+} from "./mocks/subscription-changes";
 
 /**
- * ReportDetail — header + filter bar + DataTable + working CSV export.
+ * ReportDetail — header + filter bar + DataTable with hook-fetched rows.
  *
- * WHY slug-dispatch to typed subcomponents (not a generic row type):
- * Each report has a different row shape. A generic `ReportDetail<T>`
- * would force every caller to know T, or we'd lose types with `any`.
- * Switching to typed per-report subcomponents keeps every table fully
- * typed end-to-end (rows, columns, csv mapping) without any casts.
+ * WHY slug-dispatch to typed sub-components (not generic ReportView<T>):
+ *   Each report has a different row shape. Switching at the page level
+ *   keeps every ReportView fully typed end-to-end (rows, columns, CSV
+ *   mapping) — no `any` casts anywhere.
  *
- * WHY CSV filename includes today's date:
- * Users downloading multiple reports shouldn't overwrite the last one.
- * ISO date suffix is stable, sortable, and reads correctly everywhere.
- *
- * WHY PDF via toast (not real implementation):
- * Proper PDF export needs jsPDF or a server-side renderer. Both are
- * heavy for what's currently a "nice to have." Stubbing with a friendly
- * toast keeps the button present and the UX honest.
+ * WHY each ReportView calls its own `useReport(slug, schema)`:
+ *   Per-slug Zod schema means runtime validation per report; TanStack
+ *   queryKey includes the slug so each report has an independent cache
+ *   entry.
  */
 
 interface ReportDetailProps {
@@ -48,9 +77,6 @@ interface ReportDetailProps {
 }
 
 export function ReportDetail({ slug }: ReportDetailProps) {
-  // Re-lookup on the client side — the parent server component couldn't
-  // pass the full template because `icon` is a React function component
-  // (not serializable across the RSC boundary). Cheap, pure lookup here.
   const template = findReportTemplate(slug);
   if (!template) return null;
 
@@ -90,36 +116,87 @@ function ReportHeader({ template }: { template: ReportTemplate }) {
 function ReportBody({ slug }: { slug: ReportTemplate["slug"] }) {
   switch (slug) {
     case "mrr-breakdown":
-      return <ReportView<MrrRow> slug={slug} rows={mrrRows} columns={mrrColumns} csvColumns={mrrCsvColumns} />;
+      return (
+        <ReportView<MrrRow>
+          slug={slug}
+          schema={MrrRowSchema}
+          columns={mrrColumns}
+          csvColumns={mrrCsvColumns}
+        />
+      );
     case "churn-cohort":
-      return <ReportView<ChurnCohortRow> slug={slug} rows={churnCohortRows} columns={churnCohortColumns} csvColumns={churnCohortCsvColumns} />;
+      return (
+        <ReportView<ChurnCohortRow>
+          slug={slug}
+          schema={ChurnCohortRowSchema}
+          columns={churnCohortColumns}
+          csvColumns={churnCohortCsvColumns}
+        />
+      );
     case "ltv-by-plan":
-      return <ReportView<LtvRow> slug={slug} rows={ltvRows} columns={ltvColumns} csvColumns={ltvCsvColumns} />;
+      return (
+        <ReportView<LtvRow>
+          slug={slug}
+          schema={LtvRowSchema}
+          columns={ltvColumns}
+          csvColumns={ltvCsvColumns}
+        />
+      );
     case "revenue-by-region":
-      return <ReportView<RegionRow> slug={slug} rows={regionRows} columns={regionColumns} csvColumns={regionCsvColumns} />;
+      return (
+        <ReportView<RegionRow>
+          slug={slug}
+          schema={RegionRowSchema}
+          columns={regionColumns}
+          csvColumns={regionCsvColumns}
+        />
+      );
     case "top-customers":
-      return <ReportView<TopCustomerRow> slug={slug} rows={topCustomerRows} columns={topCustomerColumns} csvColumns={topCustomerCsvColumns} />;
+      return (
+        <ReportView<TopCustomerRow>
+          slug={slug}
+          schema={TopCustomerRowSchema}
+          columns={topCustomerColumns}
+          csvColumns={topCustomerCsvColumns}
+        />
+      );
     case "subscription-changes":
-      return <ReportView<SubChangeRow> slug={slug} rows={subChangeRows} columns={subChangeColumns} csvColumns={subChangeCsvColumns} />;
+      return (
+        <ReportView<SubChangeRow>
+          slug={slug}
+          schema={SubChangeRowSchema}
+          columns={subChangeColumns}
+          csvColumns={subChangeCsvColumns}
+        />
+      );
   }
 }
 
 interface ReportViewProps<T extends { id: string }> {
   slug: string;
-  rows: T[];
-  columns: React.ComponentProps<typeof DataTable<T>>["columns"];
-  csvColumns: Parameters<typeof toCsv<T>>[1];
+  schema: z.ZodType<T>;
+  columns: Column<T>[];
+  csvColumns: CsvColumn<T>[];
 }
 
 function ReportView<T extends { id: string }>({
   slug,
-  rows,
+  schema,
   columns,
   csvColumns,
 }: ReportViewProps<T>) {
   const [range, setRange] = useState<DatePreset>("30d");
+  const { data, isLoading, isError, error, refetch } = useReport<T>(
+    slug,
+    schema
+  );
+  const rows = data ?? [];
 
   const handleExportCsv = () => {
+    if (rows.length === 0) {
+      toast.info("Nothing to export yet");
+      return;
+    }
     const csv = toCsv(rows, csvColumns);
     const today = new Date().toISOString().slice(0, 10);
     downloadCsv(`${slug}-${today}.csv`, csv);
@@ -133,6 +210,21 @@ function ReportView<T extends { id: string }>({
       description: "For now, use your browser's Print → Save as PDF",
     });
   };
+
+  const emptyState = isLoading
+    ? "Loading report…"
+    : isError
+      ? (
+        <div className="flex flex-col items-center gap-3 py-4">
+          <p className="text-sm text-danger-text">
+            {error?.message ?? "Failed to load report"}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      )
+      : "No rows in this report";
 
   return (
     <>
@@ -150,7 +242,12 @@ function ReportView<T extends { id: string }>({
         columns={columns}
         rows={rows}
         getRowKey={(row) => row.id}
-        pagination={{ page: 1, pageSize: rows.length, total: rows.length }}
+        pagination={{
+          page: 1,
+          pageSize: rows.length || 1,
+          total: rows.length,
+        }}
+        emptyState={emptyState}
       />
     </>
   );

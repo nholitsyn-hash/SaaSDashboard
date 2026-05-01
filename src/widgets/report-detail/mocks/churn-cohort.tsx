@@ -1,25 +1,18 @@
+import { z } from "zod";
 import type { Column } from "@/shared/ui";
 import type { CsvColumn } from "@/shared/utils/csv";
 
-export interface ChurnCohortRow {
-  id: string;
-  cohort: string;
-  size: number;
-  month1: number;
-  month2: number;
-  month3: number;
-  churnRate: number;
-  topReason: string;
-}
-
-export const churnCohortRows: ChurnCohortRow[] = [
-  { id: "1", cohort: "Nov '25", size: 240, month1: 85, month2: 72, month3: 64, churnRate: 7.2, topReason: "Too expensive" },
-  { id: "2", cohort: "Dec '25", size: 268, month1: 86, month2: 74, month3: 66, churnRate: 6.8, topReason: "Missing feature" },
-  { id: "3", cohort: "Jan '26", size: 295, month1: 87, month2: 75, month3: 68, churnRate: 6.5, topReason: "Missing feature" },
-  { id: "4", cohort: "Feb '26", size: 312, month1: 88, month2: 77, month3: null as unknown as number, churnRate: 6.1, topReason: "Poor support" },
-  { id: "5", cohort: "Mar '26", size: 340, month1: 89, month2: null as unknown as number, month3: null as unknown as number, churnRate: 5.8, topReason: "Consolidation" },
-  { id: "6", cohort: "Apr '26", size: 358, month1: null as unknown as number, month2: null as unknown as number, month3: null as unknown as number, churnRate: 0, topReason: "—" },
-];
+export const ChurnCohortRowSchema = z.object({
+  id: z.string(),
+  cohort: z.string(),
+  size: z.number(),
+  month1: z.number().nullable(),
+  month2: z.number().nullable(),
+  month3: z.number().nullable(),
+  churnRate: z.number(),
+  topReason: z.string(),
+});
+export type ChurnCohortRow = z.infer<typeof ChurnCohortRowSchema>;
 
 const pct = (n: number | null | undefined) =>
   n == null || Number.isNaN(n) ? "—" : `${n}%`;
