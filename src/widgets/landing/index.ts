@@ -1,0 +1,7 @@
+export { LandingHeader } from "./LandingHeader";
+export { LandingHero } from "./LandingHero";
+export { LandingFeatures } from "./LandingFeatures";
+export { LandingPricing } from "./LandingPricing";
+export { LandingFaq } from "./LandingFaq";
+export { LandingCta } from "./LandingCta";
+export { LandingFooter } from "./LandingFooter";
