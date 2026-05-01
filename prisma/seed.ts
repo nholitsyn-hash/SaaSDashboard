@@ -63,6 +63,35 @@ async function main() {
     },
   });
 
+  // Public demo viewer — exposed on the login page as a click-to-fill
+  // credential. Role: viewer → can browse Dashboard/Analytics/Reports
+  // but admin pages auto-hide via the role-filtered sidebar nav.
+  const demoUser = await db.user.upsert({
+    where: { email: "demo@example.com" },
+    update: { lastActiveAt: new Date() },
+    create: {
+      email: "demo@example.com",
+      name: "Demo Viewer",
+      passwordHash,
+      lastActiveAt: new Date(),
+    },
+  });
+
+  await db.membership.upsert({
+    where: {
+      userId_organizationId: {
+        userId: demoUser.id,
+        organizationId: org.id,
+      },
+    },
+    update: { role: "viewer" },
+    create: {
+      userId: demoUser.id,
+      organizationId: org.id,
+      role: "viewer",
+    },
+  });
+
   // Team members — 6 additional users + memberships.
   //
   // WHY relative offsets for lastActiveAt:
